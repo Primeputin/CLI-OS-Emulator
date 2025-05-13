@@ -62,7 +62,7 @@ int main() {
     string command;
     while (true)
     {
-        cout << "Enter a comamnd: ";
+        cout << "Enter a command: ";
         getline(cin, command);
         if (command == "initialize")
         {
@@ -87,6 +87,7 @@ int main() {
         else if (command == "exit")
         {
             recognizedCommand(command);
+            break;
         }
         else if (command == "clear") {
             recognizedCommand(command);

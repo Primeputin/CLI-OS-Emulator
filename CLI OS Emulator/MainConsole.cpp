@@ -1,6 +1,9 @@
 #include "MainConsole.h"
+#include "ProcessConsole.h"
+#include "ConsoleManager.h"
+#include "Console.h"
+#include "Process.h"
 #include <iostream>
-#include <string>
 
 // ANSI escape codes for color
 #define GREEN   "\033[1;32m"
@@ -14,6 +17,7 @@ MainConsole& MainConsole::getInstance() {
 
 
 void MainConsole::printCSOPESYBanner() {
+
     std::cout << R"(  
   ______    ______    ______   _______   ________   ______   __      __ 
  /      \  /      \  /      \ /       \ /        | /      \ /  \    /  |
@@ -63,29 +67,7 @@ void MainConsole::reportUtil(string command)
     recognizedCommand(command);
 }
 
-void MainConsole::clear()
-{
-    #ifdef _WIN32
-        system("cls");
-    #else
-        system("clear");
-    #endif
-}
-
-vector<string> MainConsole::getSpacedTexts(string command)
-{
-    vector<string> tokens;
-    stringstream parser(command);
-    string token;
-
-    while (parser >> token) {
-        tokens.push_back(token);
-    }
-
-    return tokens;
-}
-
-void MainConsole::processCommand(string command)
+int MainConsole::processCommand (string command)
 {
     vector<string> texts = getSpacedTexts(command);
     if (texts.size() == 1)
@@ -113,11 +95,11 @@ void MainConsole::processCommand(string command)
         else if (command == "exit")
         {
             recognizedCommand(command);
-            exit(0);
+            return 1;
         }
         else if (command == "clear") {
             recognizedCommand(command);
-		    clear();
+            Console::clear();
             printCSOPESYBanner();
         }
         else
@@ -134,10 +116,12 @@ void MainConsole::processCommand(string command)
 		if (texts[1] == "-s")
 		{
 			recognizedCommand(command);
+			ConsoleManager::getInstance().createProcess(texts[2]);
 		}
 		else if (texts[1] == "-r")
 		{
 			recognizedCommand(command);
+            ConsoleManager::getInstance().switchToProcessConsole(texts[2]);
 		}
         else
         {
@@ -147,21 +131,13 @@ void MainConsole::processCommand(string command)
     else if (texts.size() != 0){
         cout << "You entered: " << command << "\n" << "Command invalid" << "\n\n";
     }
+    return 0;
 }
 
-void MainConsole::run() 
-{
-	printCSOPESYBanner();
-
-	while (true) {
-		getCommand();
-	}
-}
-
-void MainConsole::getCommand()
+int MainConsole::getCommand()
 {
     string command;
     cout << "Enter a command: ";
     getline(cin, command);
-	processCommand(command);
+    return processCommand(command);
 }

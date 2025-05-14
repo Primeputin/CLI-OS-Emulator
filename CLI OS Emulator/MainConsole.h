@@ -1,22 +1,15 @@
 #pragma once
+#include "Console.h"
 #include <string>
 #include <vector>
 #include <sstream>
 
 using namespace std;
 
-class MainConsole
+class MainConsole : public Console
 {
     public:
         static MainConsole& getInstance();
-
-		void run();
-
-
-    private:
-        MainConsole() = default;  // Private constructor
-        MainConsole(const MainConsole&) = delete;             // No copying
-        MainConsole& operator=(const MainConsole&) = delete;  // No assignment
 
         void printCSOPESYBanner();
 
@@ -32,13 +25,9 @@ class MainConsole
 
         void reportUtil(string command);
 
-        void clear();
+        virtual int processCommand(string command) override; 
 
-        vector<string> getSpacedTexts(string command);
-
-        void processCommand(string command);
-
-        void getCommand();
+        virtual int getCommand() override;
 
 };
 

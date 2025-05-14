@@ -130,10 +130,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CLI OS Emulator.cpp" />
+    <ClCompile Include="Console.cpp" />
+    <ClCompile Include="ConsoleManager.cpp" />
     <ClCompile Include="MainConsole.cpp" />
+    <ClCompile Include="Process.cpp" />
+    <ClCompile Include="ProcessConsole.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Console.h" />
+    <ClInclude Include="ConsoleManager.h" />
     <ClInclude Include="MainConsole.h" />
+    <ClInclude Include="Process.h" />
+    <ClInclude Include="ProcessConsole.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

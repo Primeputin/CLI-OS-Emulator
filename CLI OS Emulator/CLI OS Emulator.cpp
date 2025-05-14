@@ -1,12 +1,15 @@
 #include <iostream>
 #include <string>
 #include "MainConsole.h"
+#include "ProcessConsole.h"
+#include "ConsoleManager.h"
 
 using namespace std;
 
 
 int main() {
-    
-    MainConsole::getInstance().run();
+    ConsoleManager::getInstance();
+    ConsoleManager::getInstance().start();
+
     return 0;
 }

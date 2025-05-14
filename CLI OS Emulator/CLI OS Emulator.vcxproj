@@ -130,6 +130,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CLI OS Emulator.cpp" />
+    <ClCompile Include="MainConsole.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MainConsole.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

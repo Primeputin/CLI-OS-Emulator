@@ -10,13 +10,7 @@
 #define YELLOW  "\033[1;33m"
 #define RESET   "\033[0m"
 
-MainConsole& MainConsole::getInstance() {
-    static MainConsole instance;
-    return instance;
-}
-
-
-void MainConsole::printCSOPESYBanner() {
+void MainConsole::header() {
 
     std::cout << R"(  
   ______    ______    ______   _______   ________   ______   __      __ 
@@ -67,7 +61,7 @@ void MainConsole::reportUtil(string command)
     recognizedCommand(command);
 }
 
-int MainConsole::processCommand (string command)
+void MainConsole::processCommand (string command)
 {
     vector<string> texts = getSpacedTexts(command);
     if (texts.size() == 1)
@@ -95,12 +89,12 @@ int MainConsole::processCommand (string command)
         else if (command == "exit")
         {
             recognizedCommand(command);
-            return 1;
+			ConsoleManager::getInstance().stop();
         }
         else if (command == "clear") {
             recognizedCommand(command);
             Console::clear();
-            printCSOPESYBanner();
+            header();
         }
         else
         {
@@ -131,13 +125,12 @@ int MainConsole::processCommand (string command)
     else if (texts.size() != 0){
         cout << "You entered: " << command << "\n" << "Command invalid" << "\n\n";
     }
-    return 0;
 }
 
-int MainConsole::getCommand()
+void MainConsole::getCommand()
 {
     string command;
     cout << "Enter a command: ";
     getline(cin, command);
-    return processCommand(command);
+    processCommand(command);
 }

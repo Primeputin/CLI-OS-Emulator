@@ -9,7 +9,7 @@ using namespace std;
 
 int main() {
     ConsoleManager::getInstance();
-    ConsoleManager::getInstance().start();
+    ConsoleManager::getInstance().run();
 
     return 0;
 }

@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <ctime>
 #include <iostream>
-#include "ConsoleManager.h"
+#include "Process.h"
 
 using namespace std;
 
@@ -13,10 +13,6 @@ class Console
 {
 	public:
 		static void clear();
-	//protected:
-
-		bool isOnDisplay;
-
 
 		void printOutInvalidCommand(string command);
 
@@ -24,14 +20,13 @@ class Console
 
 		void show_dateTime();
 
-		virtual int processCommand(string command) = 0; // must be overridden/implemented in derived classes
+		virtual void header(); // optional to be overridden
 
-		virtual int getCommand() = 0;
+		virtual void header(Process process);
 
-    //public:
+		virtual void processCommand(string command) = 0; // must be overridden/implemented in derived classes
 
-		bool getIsOnDisplay() const;
+		virtual void getCommand() = 0;
 
-		void setIsOnDisplay(bool isOnDisplay);
 };
 

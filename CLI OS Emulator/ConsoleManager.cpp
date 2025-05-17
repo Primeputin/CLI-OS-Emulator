@@ -1,6 +1,8 @@
 #include "ConsoleManager.h"
 #include "MainConsole.h"
 #include "ProcessConsole.h"
+#include "Console.h"
+#include <memory>
 
 ConsoleManager& ConsoleManager::getInstance()
 {
@@ -8,28 +10,14 @@ ConsoleManager& ConsoleManager::getInstance()
 	return instance;
 }
 
-void ConsoleManager::start() {
-	MainConsole& mainConsole = MainConsole::getInstance();
-	ProcessConsole& processConsole = ProcessConsole::getInstance();
-
-	mainConsole.setIsOnDisplay(true);
-	processConsole.setIsOnDisplay(false);
-	mainConsole.printCSOPESYBanner();
-	bool exit = false;
-	while (!exit)
+void ConsoleManager::run() {
+	this->running = true; // Set running to true when starting the console manager
+	this->currentConsole = make_unique<MainConsole>(); // Initialize the current console to MainConsole
+	this->currentConsole->header(); // Call the header function of the current console
+	while (this->running)
 	{
 
-		if (mainConsole.getIsOnDisplay()) {
-			exit = mainConsole.getCommand();
-		}
-		else if (processConsole.getIsOnDisplay()) 
-		{
-			processConsole.getCommand();
-		}
-		else {
-			std::cerr << "No console is currently displayed." << std::endl;
-			exit = true; // Exit the loop if no console is displayed
-		}
+		this->currentConsole->getCommand();
 	}
 
 }
@@ -50,27 +38,26 @@ void ConsoleManager::createProcess(string name)
 
 void ConsoleManager::switchToMain()
 {
-	MainConsole& mainConsole = MainConsole::getInstance();
-	ProcessConsole& processConsole = ProcessConsole::getInstance();
 	Console::clear();
-	mainConsole.printCSOPESYBanner();
-	mainConsole.setIsOnDisplay(true);
-	processConsole.setIsOnDisplay(false);
+	this->currentConsole = make_unique<MainConsole>();
+	this->currentConsole->header();
 }
 
 void ConsoleManager::switchToProcessConsole(string name)
 {
-	MainConsole& mainConsole = MainConsole::getInstance();
-	ProcessConsole& processConsole = ProcessConsole::getInstance();
 	if (processTable.contains(name)) {
 		Console::clear();
-		processConsole.show_dateTime();
-		processConsole.displayProcessInfo(processTable.at(name));
-		mainConsole.setIsOnDisplay(false);
-		processConsole.setIsOnDisplay(true);
+		this->currentConsole = make_unique<ProcessConsole>();
+		this->currentConsole->show_dateTime();
+		this->currentConsole->header(processTable.at(name));
 	}
 	else {
 		cerr << "None found" << endl;
 	}
+}
+
+void ConsoleManager::stop()
+{
+	this->running = false; // Set running to false to stop the console manager
 }
 

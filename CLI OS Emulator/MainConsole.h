@@ -9,9 +9,9 @@ using namespace std;
 class MainConsole : public Console
 {
     public:
-        static MainConsole& getInstance();
+		MainConsole() = default; // Default constructor
 
-        void printCSOPESYBanner();
+        void header() override;
 
         void recognizedCommand(string command);
 
@@ -25,9 +25,9 @@ class MainConsole : public Console
 
         void reportUtil(string command);
 
-        virtual int processCommand(string command) override; 
+        virtual void processCommand(string command) override; 
 
-        virtual int getCommand() override;
+        virtual void getCommand() override;
 
 };
 

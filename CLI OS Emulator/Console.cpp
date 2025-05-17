@@ -25,13 +25,15 @@ void Console::show_dateTime()
     #endif
     cout << put_time(&local_time, "%m/%d/%Y, %I:%M:%S %p") << '\n';
 }
-bool Console::getIsOnDisplay() const
+
+void Console::header()
 {
-    return isOnDisplay;
+	cout << "CSOPESY CLI OS Emulator" << endl;
 }
-void Console::setIsOnDisplay(bool isOnDisplay)
+
+void Console::header(Process process)
 {
-	this->isOnDisplay = isOnDisplay;
+    cout << "CSOPESY CLI OS Emulator" << endl;
 }
 
 vector<string> Console::getSpacedTexts(string command)

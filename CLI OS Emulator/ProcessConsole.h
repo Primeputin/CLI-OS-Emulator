@@ -11,12 +11,11 @@ using namespace std;
 class ProcessConsole : public Console
 {
 	public:
-		static ProcessConsole& getInstance();
 
-		void displayProcessInfo(Process process);
+		void header(Process process) override;
 
-		virtual int processCommand(string command) override;
+		virtual void processCommand(string command) override;
 
-		virtual int getCommand() override;
+		virtual void getCommand() override;
 };
 

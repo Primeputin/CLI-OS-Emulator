@@ -48,7 +48,6 @@ void ConsoleManager::switchToProcessConsole(string name)
 	if (processTable.contains(name)) {
 		Console::clear();
 		this->currentConsole = make_unique<ProcessConsole>();
-		this->currentConsole->show_dateTime();
 		this->currentConsole->header(processTable.at(name));
 	}
 	else {

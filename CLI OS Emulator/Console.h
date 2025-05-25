@@ -18,7 +18,7 @@ class Console
 
 		vector<string> getSpacedTexts(string command);
 
-		void show_dateTime();
+		void show_dateTime(time_t time);
 
 		virtual void header(); // optional to be overridden
 

@@ -13,15 +13,14 @@ void Console::printOutInvalidCommand(string command)
 	cout << "You entered: " << command << "\n" << "Command invalid" << "\n\n";
 }
 
-void Console::show_dateTime()
+void Console::show_dateTime(time_t time)
 {
-    time_t now = time(nullptr);
     tm local_time = {};
     // Use thread-safe functions to get local time
     #if defined(_WIN32)
-        localtime_s(&local_time, &now);  // Windows
+        localtime_s(&local_time, &time);  // Windows
     #else
-        localtime_r(&now, &local_time);  // POSIX (Linux/macOS)
+        localtime_r(&now, &time);  // POSIX (Linux/macOS)
     #endif
     cout << put_time(&local_time, "%m/%d/%Y, %I:%M:%S %p") << '\n';
 }

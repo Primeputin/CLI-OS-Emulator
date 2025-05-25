@@ -8,6 +8,8 @@ void ProcessConsole::header(Process process)
 	cout << "Process Name: " << process.getName() << endl;
 	cout << "Current Line: " << process.getCurrentLine() << endl;
 	cout << "Total Lines: " << process.getTotalLines() << endl;
+	cout << "Date and time Created: ";
+	show_dateTime(process.getCreatedTime());
 }
 
 void ProcessConsole::processCommand(string command)

@@ -5,6 +5,7 @@ Process::Process(string name, uint16_t currentLine, uint16_t totalLines)
 	this->name = name;
 	this->currentLine = currentLine;
 	this->totalLines = totalLines;
+	this->createdTime = time(nullptr);
 }
 
 string Process::getName() const {
@@ -17,4 +18,8 @@ uint16_t Process::getCurrentLine() const {
 
 uint16_t Process::getTotalLines() const {
     return totalLines;
+}
+
+time_t Process::getCreatedTime() const {
+	return createdTime;
 }

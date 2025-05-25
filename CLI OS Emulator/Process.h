@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <ctime>
 
 using namespace std;
 
@@ -10,11 +11,13 @@ class Process
 		string name;
 		uint16_t currentLine;
 		uint16_t totalLines;
+		time_t createdTime;
 		
 	public:
 		Process(string name, uint16_t currentLine, uint16_t totalLines);
 		string getName() const;
 		uint16_t getCurrentLine() const;
 		uint16_t getTotalLines() const;
+		time_t getCreatedTime() const;
 };
 

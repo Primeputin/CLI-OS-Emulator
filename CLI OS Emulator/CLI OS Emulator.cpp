@@ -8,8 +8,12 @@ using namespace std;
 
 
 int main() {
-    ConsoleManager::getInstance();
-    ConsoleManager::getInstance().run();
 
+	ConsoleManager::getInstance()->initialize();
+	while (ConsoleManager::getInstance()->running)
+	{
+		ConsoleManager::getInstance()->currentConsole->getCommand();
+	}
+	ConsoleManager::getInstance()->destroy();
     return 0;
 }

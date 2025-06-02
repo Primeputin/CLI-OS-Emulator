@@ -11,12 +11,18 @@ using namespace std;
 class ConsoleManager
 {
 	private:
-		unordered_map<std::string, Process> processTable;
-		bool running = false;
-		unique_ptr<Console> currentConsole;
+		unordered_map<string, shared_ptr<Console>> consoleTable;
+		ConsoleManager();
+		~ConsoleManager() = default;
+		ConsoleManager(ConsoleManager const&) {}; // copy constructor is private
+		ConsoleManager& operator=(ConsoleManager const&) {}; // assignment operator is private
+		static ConsoleManager* sharedInstance;
 	public:
-		static ConsoleManager& getInstance();
-		void run();
+		bool running = false;
+		shared_ptr<Console> currentConsole;
+		static ConsoleManager* getInstance();
+		static void initialize();
+		static void destroy();
 		void createProcess(string name);
 		void switchToMain();
 		void switchToProcessConsole(string name);

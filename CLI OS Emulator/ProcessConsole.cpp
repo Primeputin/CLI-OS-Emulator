@@ -3,13 +3,18 @@
 #include "Console.h"
 #include <iostream>
 
-void ProcessConsole::header(Process process)
+
+ProcessConsole::ProcessConsole(std::shared_ptr<Process> newProcess)
+	: Console("PROCESS_SCREEN_" + newProcess->getName()), process(newProcess) {
+}
+
+void ProcessConsole::header()
 {
-	cout << "Process Name: " << process.getName() << endl;
-	cout << "Current Line: " << process.getCurrentLine() << endl;
-	cout << "Total Lines: " << process.getTotalLines() << endl;
+	cout << "Process Name: " << this->process->getName() << endl;
+	cout << "Current Line: " << this->process->getCurrentLine() << endl;
+	cout << "Total Lines: " << this->process->getTotalLines() << endl;
 	cout << "Date and time Created: ";
-	show_dateTime(process.getCreatedTime());
+	show_dateTime(this->process->getCreatedTime());
 }
 
 void ProcessConsole::processCommand(string command)
@@ -18,7 +23,7 @@ void ProcessConsole::processCommand(string command)
 	if (command == "exit")
 	{
 		Console::clear();
-		ConsoleManager::getInstance().switchToMain();
+		ConsoleManager::getInstance()->switchToMain();
 	}
 	else if (!texts.empty())
 	{

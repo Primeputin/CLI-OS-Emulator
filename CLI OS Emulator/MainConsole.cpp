@@ -10,6 +10,10 @@
 #define YELLOW  "\033[1;33m"
 #define RESET   "\033[0m"
 
+MainConsole::MainConsole() : Console("MAIN_CONSOLE") {
+	
+}
+
 void MainConsole::header() {
 
     std::cout << R"(  
@@ -89,7 +93,7 @@ void MainConsole::processCommand (string command)
         else if (command == "exit")
         {
             recognizedCommand(command);
-			ConsoleManager::getInstance().stop();
+			ConsoleManager::getInstance()->running = false;
         }
         else if (command == "clear") {
             recognizedCommand(command);
@@ -110,12 +114,12 @@ void MainConsole::processCommand (string command)
 		if (texts[1] == "-s")
 		{
 			recognizedCommand(command);
-			ConsoleManager::getInstance().createProcess(texts[2]);
+			ConsoleManager::getInstance()->createProcess(texts[2]);
 		}
 		else if (texts[1] == "-r")
 		{
 			recognizedCommand(command);
-            ConsoleManager::getInstance().switchToProcessConsole(texts[2]);
+            ConsoleManager::getInstance()->switchToProcessConsole("PROCESS_SCREEN_" + texts[2]);
 		}
         else
         {

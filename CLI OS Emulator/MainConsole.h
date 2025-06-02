@@ -9,7 +9,7 @@ using namespace std;
 class MainConsole : public Console
 {
     public:
-		MainConsole() = default; // Default constructor
+        MainConsole();
 
         void header() override;
 

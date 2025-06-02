@@ -4,51 +4,72 @@
 #include "Console.h"
 #include <memory>
 
-ConsoleManager& ConsoleManager::getInstance()
+const string MAIN_CONSOLE_NAME = "MAIN_CONSOLE";
+const string PROCESS_SCREEN_PREFIX = "PROCESS_SCREEN_";
+
+ConsoleManager* ConsoleManager::sharedInstance = nullptr;
+ConsoleManager* ConsoleManager::getInstance()
 {
-	static ConsoleManager instance;
-	return instance;
+	return sharedInstance;
 }
 
-void ConsoleManager::run() {
-	this->running = true; // Set running to true when starting the console manager
-	this->currentConsole = make_unique<MainConsole>(); // Initialize the current console to MainConsole
-	this->currentConsole->header(); // Call the header function of the current console
-	while (this->running)
-	{
-
-		this->currentConsole->getCommand();
+void ConsoleManager::initialize()
+{
+	if (sharedInstance) {
+		std::cerr << "ConsoleManager is already initialized." << std::endl;
+		return;
 	}
+	sharedInstance = new ConsoleManager();
+}
 
+void ConsoleManager::destroy()
+{
+	if (sharedInstance) {
+		delete sharedInstance;
+		sharedInstance = nullptr;
+	}
+}
+
+ConsoleManager::ConsoleManager() {
+	this->running = true; // Set running to true when starting the console manager
+	shared_ptr<MainConsole> mainConsole = make_shared<MainConsole>();
+	consoleTable.insert({ mainConsole->getName(), mainConsole });
+	this->currentConsole = mainConsole;
+	this->currentConsole->header(); // Call the header function of the current console
+	switchToMain(); // Switch to the main console
 }
 
 void ConsoleManager::createProcess(string name)
 {
-	if (processTable.find(name) != this->processTable.end()) {
+	if (consoleTable.find(PROCESS_SCREEN_PREFIX + name) != this->consoleTable.end()) {
 		std::cerr << "Screen name " << name << " already exists. Please use a different name." << std::endl;
 		return;
 	}
 
-	processTable.insert({ name, Process(name, 0, 50) }); // temporary
+	shared_ptr<Process> process = make_shared<Process>(name, 50, 0);
+
+	shared_ptr<ProcessConsole> newConsole = make_shared<ProcessConsole>(process);
+
+	consoleTable.insert({ newConsole->getName(), newConsole}); // temporary
 
 	cout << "Screen name: " << name << " created successfully." << std::endl;
 
-	switchToProcessConsole(name);
+	switchToProcessConsole(newConsole->getName());
 }
 
 void ConsoleManager::switchToMain()
 {
 	Console::clear();
-	this->currentConsole = make_unique<MainConsole>();
+	this->currentConsole = this->consoleTable.at(MAIN_CONSOLE_NAME);
 	this->currentConsole->header();
 }
 
 void ConsoleManager::switchToProcessConsole(string name)
 {
-	if (processTable.contains(name)) {
+	if (consoleTable.contains(name)) {
 		Console::clear();
-		this->currentConsole = make_unique<ProcessConsole>();
-		this->currentConsole->header(processTable.at(name));
+		this->currentConsole = this->consoleTable.at(name);
+		this->currentConsole->header();
 	}
 	else {
 		cerr << "None found" << endl;

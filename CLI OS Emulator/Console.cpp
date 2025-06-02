@@ -1,5 +1,10 @@
 #include "Console.h"
 
+Console::Console(string name)
+{
+	this->name = name;
+}
+
 void Console::clear()
 {
 #ifdef _WIN32
@@ -30,11 +35,6 @@ void Console::header()
 	cout << "CSOPESY CLI OS Emulator" << endl;
 }
 
-void Console::header(Process process)
-{
-    cout << "CSOPESY CLI OS Emulator" << endl;
-}
-
 vector<string> Console::getSpacedTexts(string command)
 {
     vector<string> tokens;
@@ -46,4 +46,9 @@ vector<string> Console::getSpacedTexts(string command)
     }
 
     return tokens;
+}
+
+const string& Console::getName() const
+{
+	return name;
 }

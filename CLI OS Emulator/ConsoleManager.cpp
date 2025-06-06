@@ -5,7 +5,6 @@
 #include <memory>
 
 const string MAIN_CONSOLE_NAME = "MAIN_CONSOLE";
-const string PROCESS_SCREEN_PREFIX = "PROCESS_SCREEN_";
 
 ConsoleManager* ConsoleManager::sharedInstance = nullptr;
 ConsoleManager* ConsoleManager::getInstance()
@@ -41,12 +40,21 @@ ConsoleManager::ConsoleManager() {
 
 void ConsoleManager::createProcess(string name)
 {
-	if (consoleTable.find(PROCESS_SCREEN_PREFIX + name) != this->consoleTable.end()) {
+	if (consoleTable.find(name) != this->consoleTable.end()) {
 		std::cerr << "Screen name " << name << " already exists. Please use a different name." << std::endl;
 		return;
 	}
 
-	shared_ptr<Process> process = make_shared<Process>(name, 50, 0);
+	// <-- Temporary -->
+	vector<shared_ptr<ICommand>> commandList;
+	for (int j = 0; j < 100; j++)
+	{
+		commandList.push_back(make_shared<PrintCommand>(100, "Hello World!"));
+	}
+
+	shared_ptr<Process> process = make_shared<Process>(100, name, commandList);
+
+	// <-- Temporary -->
 
 	shared_ptr<ProcessConsole> newConsole = make_shared<ProcessConsole>(process);
 
@@ -76,8 +84,50 @@ void ConsoleManager::switchToProcessConsole(string name)
 	}
 }
 
+void ConsoleManager::addToConsoleTable(string name, shared_ptr<Console> console)
+{
+	if (consoleTable.find(name) == consoleTable.end()) {
+		consoleTable.insert({ name, console });
+	}
+	else {
+		cerr << "Console with name " << name << " already exists." << endl;
+	}
+}
+
 void ConsoleManager::stop()
 {
 	this->running = false; // Set running to false to stop the console manager
 }
+
+void ConsoleManager::initScheduler()
+{
+	if (!scheduler) {
+		scheduler = make_shared<Scheduler>(Scheduler::FCFS, 4, 0, 0, 0, 0, 33);
+	}
+	else {
+		cerr << "Scheduler is already initialized." << endl;
+	}
+}
+
+void ConsoleManager::runScheduler()
+{
+	if (scheduler) {
+		scheduler->run();
+	}
+	else {
+		cerr << "Scheduler is not initialized." << endl;
+	}
+}
+
+void ConsoleManager::listProcesses()
+{
+	if (scheduler) {
+		scheduler->printProcessesStatus();
+	}
+	else {
+		cerr << "Scheduler is not initialized." << endl;
+	}
+}
+
+
 

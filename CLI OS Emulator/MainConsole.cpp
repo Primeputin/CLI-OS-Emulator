@@ -43,6 +43,8 @@ void MainConsole::recognizedCommand(string command)
 void MainConsole::initialize(string command)
 {
     recognizedCommand(command);
+	ConsoleManager::getInstance()->initScheduler();
+    schedulerInitialized = true;
 }
 
 void MainConsole::screen(string command)
@@ -53,6 +55,7 @@ void MainConsole::screen(string command)
 void MainConsole::schedulerStart(string command)
 {
     recognizedCommand(command);
+	ConsoleManager::getInstance()->runScheduler();
 }
 
 void MainConsole::schedulerStop(string command)
@@ -68,7 +71,18 @@ void MainConsole::reportUtil(string command)
 void MainConsole::processCommand (string command)
 {
     vector<string> texts = getSpacedTexts(command);
-    if (texts.size() == 1)
+    if (!schedulerInitialized)
+    {
+        if (command == "initialize")
+        {
+            initialize(command);
+        }
+        else
+        {
+			cout << "You entered: " << command << "\n" << "Command invalid, please initialize the scheduler first." << "\n\n";
+        }
+    }
+    else if (texts.size() == 1)
     {
         if (command == "initialize")
         {
@@ -108,6 +122,7 @@ void MainConsole::processCommand (string command)
 	else if (texts.size() == 2 && texts[0] == "screen" && texts[1] == "-ls")
 	{
         recognizedCommand(command);
+        ConsoleManager::getInstance()->listProcesses();
 	}
 	else if (texts.size() == 3 && texts[0] == "screen")
 	{
@@ -119,7 +134,7 @@ void MainConsole::processCommand (string command)
 		else if (texts[1] == "-r")
 		{
 			recognizedCommand(command);
-            ConsoleManager::getInstance()->switchToProcessConsole("PROCESS_SCREEN_" + texts[2]);
+            ConsoleManager::getInstance()->switchToProcessConsole(texts[2]);
 		}
         else
         {

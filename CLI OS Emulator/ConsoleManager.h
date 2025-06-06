@@ -2,6 +2,8 @@
 
 #include "Process.h"
 #include "Console.h"
+#include "Scheduler.h"
+#include "PrintCommand.h"
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -17,6 +19,8 @@ class ConsoleManager
 		ConsoleManager(ConsoleManager const&) {}; // copy constructor is private
 		ConsoleManager& operator=(ConsoleManager const&) {}; // assignment operator is private
 		static ConsoleManager* sharedInstance;
+
+		shared_ptr<Scheduler> scheduler;
 	public:
 		bool running = false;
 		shared_ptr<Console> currentConsole;
@@ -26,6 +30,11 @@ class ConsoleManager
 		void createProcess(string name);
 		void switchToMain();
 		void switchToProcessConsole(string name);
+		void addToConsoleTable(string name, shared_ptr<Console> console);
 		void stop();
+
+		void initScheduler();
+		void runScheduler();
+		void listProcesses();
 };
 

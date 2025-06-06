@@ -5,7 +5,7 @@
 
 
 ProcessConsole::ProcessConsole(std::shared_ptr<Process> newProcess)
-	: Console("PROCESS_SCREEN_" + newProcess->getName()), process(newProcess) {
+	: Console(newProcess->getName()), process(newProcess) {
 }
 
 void ProcessConsole::header()

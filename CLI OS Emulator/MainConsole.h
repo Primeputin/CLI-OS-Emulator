@@ -28,6 +28,9 @@ class MainConsole : public Console
         virtual void processCommand(string command) override; 
 
         virtual void getCommand() override;
+    private:
+		bool schedulerInitialized = false; // Flag to check if scheduler is initialized
+
 
 };
 

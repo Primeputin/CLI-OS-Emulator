@@ -132,16 +132,24 @@
     <ClCompile Include="CLI OS Emulator.cpp" />
     <ClCompile Include="Console.cpp" />
     <ClCompile Include="ConsoleManager.cpp" />
+    <ClCompile Include="CPUCoreWorker.cpp" />
+    <ClCompile Include="ICommand.cpp" />
     <ClCompile Include="MainConsole.cpp" />
+    <ClCompile Include="PrintCommand.cpp" />
     <ClCompile Include="Process.cpp" />
     <ClCompile Include="ProcessConsole.cpp" />
+    <ClCompile Include="Scheduler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Console.h" />
     <ClInclude Include="ConsoleManager.h" />
+    <ClInclude Include="CPUCoreWorker.h" />
+    <ClInclude Include="ICommand.h" />
     <ClInclude Include="MainConsole.h" />
+    <ClInclude Include="PrintCommand.h" />
     <ClInclude Include="Process.h" />
     <ClInclude Include="ProcessConsole.h" />
+    <ClInclude Include="Scheduler.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -54,7 +54,6 @@ void Scheduler::run()
 	{
 		case SchedulingAlgorithm::FCFS:
 			this->schedulerThread = thread(&Scheduler::fcfs, this);
-			this->schedulerThread.detach();
 			break;
 		case SchedulingAlgorithm::RR:
 			// Implement Round Robin scheduling here
@@ -68,6 +67,9 @@ void Scheduler::run()
 void Scheduler::stop()
 {
 	this->running.store(false);
+	if (this->schedulerThread.joinable()) {
+		this->schedulerThread.join(); // wait for the thread to finish
+	}
 }
 
 void Scheduler::fcfs()
@@ -91,18 +93,22 @@ void Scheduler::fcfs()
 
 		}
 
-		// Check for finished processes and move them to finishedProcesses vector
-		for (auto runningProcess = this->runningProcesses.begin(); runningProcess != this->runningProcesses.end();)
 		{
 			lock_guard<mutex> lock(mtx);
-			if ((*runningProcess)->getProcessState() == Process::FINISHED)
+
+			// Check for finished processes and move them to finishedProcesses vector
+			for (auto runningProcess = this->runningProcesses.begin(); runningProcess != this->runningProcesses.end();)
 			{
-				this->finishedProcesses.push_back(*runningProcess);
-				runningProcess = this->runningProcesses.erase(runningProcess); // remove finished process from running processes
-			}
-			else
-			{
-				++runningProcess; // move to the next process
+
+				if ((*runningProcess)->getProcessState() == Process::FINISHED)
+				{
+					this->finishedProcesses.push_back(*runningProcess);
+					runningProcess = this->runningProcesses.erase(runningProcess); // remove finished process from running processes
+				}
+				else
+				{
+					++runningProcess; // move to the next process
+				}
 			}
 		}
 	}
@@ -120,12 +126,12 @@ void Scheduler::printProcessesStatus()
 		}
 	}
 
-	cout << "CPU Utilization: " << (runningCores * 100) / numberOfCores << "%\n";
-	cout << "Cores used: " << runningCores << "\n";
-	cout << "Cores available: " << numberOfCores - runningCores << "\n\n";
-	cout << "--------------------------\n";
+	std::cout << "CPU Utilization: " << (runningCores * 100) / numberOfCores << "%\n";
+	std::cout << "Cores used: " << runningCores << "\n";
+	std::cout << "Cores available: " << numberOfCores - runningCores << "\n\n";
+	std::cout << "--------------------------\n";
 
-    cout << "Running processes:\n";
+    std::cout << "Running processes:\n";
     for (const auto& process : runningProcesses) {
         int currentInstruction = process->getCurrentLine();
         int totalInstructions = process->getTotalLines();
@@ -142,7 +148,7 @@ void Scheduler::printProcessesStatus()
             << currentInstruction << "/" << totalInstructions << "\n";         
     }
 
-    cout << "\nFinished processes:\n";
+    std::cout << "\nFinished processes:\n";
     for (const auto& process : finishedProcesses) {
 		int currentInstruction = process->getCurrentLine();
 		int totalInstructions = process->getTotalLines();
@@ -153,12 +159,12 @@ void Scheduler::printProcessesStatus()
         tm now;
         localtime_s(&now, &createdTime);
 
-        cout << std::left << setw(12) << processName                     
+        std::cout << std::left << setw(12) << processName                     
             << " (" << put_time(&now, "%m/%d/%Y %I:%M:%S%p") << ")    "     
             << std::setw(10) << "Finished"                                    
             << currentInstruction << "/" << totalInstructions << "\n";         
 
     }
 
-    cout << "--------------------------\n";
+    std::cout << "--------------------------\n";
 }

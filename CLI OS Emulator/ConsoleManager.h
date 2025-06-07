@@ -33,8 +33,12 @@ class ConsoleManager
 		void addToConsoleTable(string name, shared_ptr<Console> console);
 		void stop();
 
+		void readConfigFile();
 		void initScheduler();
 		void runScheduler();
+		void stopScheduler();
 		void listProcesses();
+
+		bool isSchedulerInitialized();
 };
 

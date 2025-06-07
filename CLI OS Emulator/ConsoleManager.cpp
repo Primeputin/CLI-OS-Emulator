@@ -2,7 +2,12 @@
 #include "MainConsole.h"
 #include "ProcessConsole.h"
 #include "Console.h"
+#include <filesystem>
+#include <fstream>
+#include <sstream>
 #include <memory>
+
+namespace fs = std::filesystem;
 
 const string MAIN_CONSOLE_NAME = "MAIN_CONSOLE";
 
@@ -18,6 +23,14 @@ void ConsoleManager::initialize()
 		std::cerr << "ConsoleManager is already initialized." << std::endl;
 		return;
 	}
+	string folderPath = "output";
+
+	// for making an output folder
+	if (fs::exists(folderPath)) {
+		fs::remove_all(folderPath);  // Deletes the folder and all contents
+	}
+	fs::create_directory(folderPath); // Recreates the empty folder
+
 	sharedInstance = new ConsoleManager();
 }
 
@@ -96,13 +109,67 @@ void ConsoleManager::addToConsoleTable(string name, shared_ptr<Console> console)
 
 void ConsoleManager::stop()
 {
+	if (scheduler)
+	{
+		stopScheduler();
+	}
 	this->running = false; // Set running to false to stop the console manager
+}
+
+void ConsoleManager::readConfigFile()
+{
+	ifstream configFile("config.txt");
+	if (!configFile) {
+		std::cerr << "Failed to open config file.\n";
+		return;
+	}
+
+	unordered_map<string, string> config;
+	string line;
+
+	while (getline(configFile, line)) {
+		istringstream iss(line);
+		string key, value;
+
+		if (!(iss >> key)) continue;  // skip empty lines or invalid lines
+
+		// If value starts with a quote, read until closing quote
+		if (iss >> ws && iss.peek() == '"') {
+			iss.get();  // consume opening quote
+			getline(iss, value, '"'); // read until closing quote
+		}
+		else {
+			iss >> value;  // read next token as value
+		}
+
+		config[key] = value;
+	}
+
+	configFile.close();
+
+	int numOfCore = config["num-cpu"].empty() ? 1 : stoi(config["num-cpu"]);
+	string algorithm = config["scheduler"];
+	int quantumCycles = config["quantum-cycles"].empty() ? 1 : stoi(config["quantum-cycles"]);
+	int batchProcessFreq = config["batch-process-freq"].empty() ? 1 : stoi(config["batch-process-freq"]);
+	int minIns = config["min-ins"].empty() ? 1 : stoi(config["min-ins"]);
+	int maxIns = config["max-ins"].empty() ? 1 : stoi(config["max-ins"]);
+	int delayPerExecution = config["delay-per-exec"].empty() ? 0 : stoi(config["delay-per-exec"]);
+
+	if (algorithm == "fcfs") {
+		scheduler = make_shared<Scheduler>(Scheduler::FCFS, numOfCore, quantumCycles, batchProcessFreq, minIns, maxIns, delayPerExecution);
+	}
+	else if (algorithm == "r") {
+		scheduler = make_shared<Scheduler>(Scheduler::RR, numOfCore, quantumCycles, batchProcessFreq, minIns, maxIns, delayPerExecution);
+	}
+	else {
+		cerr << "Unknown scheduling algorithm: " << algorithm << endl;
+	}
 }
 
 void ConsoleManager::initScheduler()
 {
 	if (!scheduler) {
-		scheduler = make_shared<Scheduler>(Scheduler::FCFS, 4, 0, 0, 0, 0, 33);
+		readConfigFile();
 	}
 	else {
 		cerr << "Scheduler is already initialized." << endl;
@@ -119,6 +186,11 @@ void ConsoleManager::runScheduler()
 	}
 }
 
+void ConsoleManager::stopScheduler()
+{
+	this->scheduler->stop(); // stop the scheduler
+}
+
 void ConsoleManager::listProcesses()
 {
 	if (scheduler) {
@@ -127,6 +199,15 @@ void ConsoleManager::listProcesses()
 	else {
 		cerr << "Scheduler is not initialized." << endl;
 	}
+}
+
+bool ConsoleManager::isSchedulerInitialized()
+{
+	if (scheduler)
+	{
+		return true;
+	}
+	return false;
 }
 
 

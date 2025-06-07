@@ -1,4 +1,10 @@
 #include "Process.h"
+#include <fstream>
+#include <string>
+#include <iomanip>
+#include <ctime>
+#include <iostream>
+#include "PrintCommand.h"
 
 Process::Process(int pid, string name, std::vector<std::shared_ptr<ICommand>> commandList)
 {
@@ -7,6 +13,17 @@ Process::Process(int pid, string name, std::vector<std::shared_ptr<ICommand>> co
 	this->currentLine = 0;
 	this->totalLines = commandList.size();
 	this->createdTime = time(nullptr);
+	this->commandList = commandList;
+
+	ofstream outFile("output/" + name + ".txt"); // Create and open a file for writing
+
+	if (outFile.is_open()) {
+		outFile << "Process Name: " << this->name << endl;
+		outFile << "Logs: " << endl;
+	}
+	else {
+		cout << "Unable to open file for writing." << endl;
+	}
 }
 
 bool Process::isFinished() const {
@@ -32,7 +49,8 @@ void Process::addCommand(std::shared_ptr<ICommand> command) {
 
 void Process::executeCurrentCommand() const {
 	if (!commandList.empty() && currentLine < commandList.size()) {
-		this->commandList[this->currentLine]->execute();
+		// this->commandList[this->currentLine]->execute(); // use this if you don't want to log it on a text file
+		this->commandList[this->currentLine]->logExecute(cpuCoreID, name);
 	}
 }
 

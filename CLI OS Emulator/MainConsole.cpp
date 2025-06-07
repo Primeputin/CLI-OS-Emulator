@@ -43,8 +43,16 @@ void MainConsole::recognizedCommand(string command)
 void MainConsole::initialize(string command)
 {
     recognizedCommand(command);
-	ConsoleManager::getInstance()->initScheduler();
-    schedulerInitialized = true;
+	if (!ConsoleManager::getInstance()->isSchedulerInitialized())
+	{
+        ConsoleManager::getInstance()->initScheduler();
+        ConsoleManager::getInstance()->runScheduler();
+	}
+    else
+    {
+        ConsoleManager::getInstance()->initScheduler();
+    }
+    
 }
 
 void MainConsole::screen(string command)
@@ -55,12 +63,13 @@ void MainConsole::screen(string command)
 void MainConsole::schedulerStart(string command)
 {
     recognizedCommand(command);
-	ConsoleManager::getInstance()->runScheduler();
+    // TODO: Create randomized processes
 }
 
 void MainConsole::schedulerStop(string command)
 {
     recognizedCommand(command);
+    // TODO: Stop making randomized processes
 }
 
 void MainConsole::reportUtil(string command)
@@ -71,11 +80,16 @@ void MainConsole::reportUtil(string command)
 void MainConsole::processCommand (string command)
 {
     vector<string> texts = getSpacedTexts(command);
-    if (!schedulerInitialized)
+    if (!ConsoleManager::getInstance()->isSchedulerInitialized())
     {
         if (command == "initialize")
         {
             initialize(command);
+        }
+        else if (command == "exit")
+        {
+            recognizedCommand(command);
+            ConsoleManager::getInstance()->stop();
         }
         else
         {
@@ -107,7 +121,7 @@ void MainConsole::processCommand (string command)
         else if (command == "exit")
         {
             recognizedCommand(command);
-			ConsoleManager::getInstance()->running = false;
+			ConsoleManager::getInstance()->stop();
         }
         else if (command == "clear") {
             recognizedCommand(command);

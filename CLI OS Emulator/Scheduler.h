@@ -8,8 +8,10 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
+#include <semaphore>
 #include "CPUCoreWorker.h"
 #include "Process.h"
+#include "constants.h"
 
 
 using namespace std;
@@ -25,10 +27,14 @@ class Scheduler
 		Scheduler(SchedulingAlgorithm algorithm, int numberOfCores, int quantumCycles, int batchProcessFreq, int minIns, int maxIns, int delaysPerExecution);
 
 		void addProcessToReadyQueue(shared_ptr<class Process> process);
+		void assignProcessToCore(int coreID);
+		void checkFinishedProcesses();
 		void run();
 		void stop();
 		void fcfs();
 		void printProcessesStatus();
+		uint64_t getTotalCycles();
+		uint64_t getTotalProcesses();
 	private:
 		int numberOfCores;
 		SchedulingAlgorithm algorithm;
@@ -37,10 +43,15 @@ class Scheduler
 		int minIns;
 		int maxIns;
 		int delayPerExecution;
+		atomic <uint64_t> totalCycles = 0; // Total cycles executed by the scheduler
+		atomic <uint64_t> totalProcesses = 0; // Total processes created
 		thread schedulerThread;
 		atomic<bool> running = false;
-		mutex mtx;
-
+		std::mutex queueMutex;       // Protects readyQueue
+		std::mutex runningMutex;     // Protects runningProcesses
+		std::mutex finishedMutex;    // Protects finishedProcesses
+		vector<shared_ptr<binary_semaphore>> startSem; // Semaphores for each core
+		vector<shared_ptr<binary_semaphore>> endSem; // Semaphores for each core
 		vector<unique_ptr<CPUCoreWorker>> cores;
 		queue<shared_ptr<Process>> readyQueue;
 		vector<shared_ptr<Process>> runningProcesses;

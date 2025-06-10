@@ -6,6 +6,7 @@
 #include <iostream>
 #include "PrintCommand.h"
 
+
 Process::Process(int pid, string name, std::vector<std::shared_ptr<ICommand>> commandList)
 {
 	this->pid = pid;
@@ -27,19 +28,23 @@ Process::Process(int pid, string name, std::vector<std::shared_ptr<ICommand>> co
 }
 
 bool Process::isFinished() const {
+	lock_guard<mutex> lock(mtx);
 	return this->currentLine >= totalLines;
 }
 
 int Process::getRemainingLines() const {
+	lock_guard<mutex> lock(mtx);
 	return totalLines - currentLine;
 }
 
 Process::ProcessState Process::getProcessState() const {
+	lock_guard<std::mutex> lock(mtx); // Lock the mutex to ensure thread safety
 	return this->processState;
 }
 
 void Process::setProcessState(ProcessState newState)
 {
+	lock_guard<std::mutex> lock(mtx); // Lock the mutex to ensure thread safety
 	this->processState = newState;
 }
 
@@ -48,6 +53,7 @@ void Process::addCommand(std::shared_ptr<ICommand> command) {
 }
 
 void Process::executeCurrentCommand() const {
+	lock_guard<mutex> lock(mtx);
 	if (!commandList.empty() && currentLine < commandList.size()) {
 		// this->commandList[this->currentLine]->execute(); // use this if you don't want to log it on a text file
 		this->commandList[this->currentLine]->logExecute(cpuCoreID, name);
@@ -55,6 +61,7 @@ void Process::executeCurrentCommand() const {
 }
 
 void Process::moveToNextLine() {
+	lock_guard<mutex> lock(mtx);
 	if (currentLine < totalLines) {
 		currentLine++;
 	}

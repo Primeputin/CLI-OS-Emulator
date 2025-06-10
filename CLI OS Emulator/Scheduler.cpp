@@ -7,7 +7,7 @@
 
 using namespace std;
 
-Scheduler::Scheduler(SchedulingAlgorithm algorithm, int numberOfCores, int quantumCycles, int batchProcessFreq, int minIns, int maxIns, int delaysPerExecution) : numberOfCores(4), // Assuming a fixed number of cores for simplicity
+Scheduler::Scheduler(SchedulingAlgorithm algorithm, int numberOfCores, int quantumCycles, int batchProcessFreq, int minIns, int maxIns, int delaysPerExecution) : numberOfCores(numberOfCores),
 	algorithm(algorithm),
 	quantumCycles(quantumCycles),
 	batchProcessFreq(batchProcessFreq),
@@ -17,9 +17,14 @@ Scheduler::Scheduler(SchedulingAlgorithm algorithm, int numberOfCores, int quant
 {
 	for (int i = 0; i < numberOfCores; i++) 
 	{
-		cores.push_back(make_unique<CPUCoreWorker>(i, quantumCycles, batchProcessFreq, minIns, maxIns, delaysPerExecution));
+		shared_ptr<binary_semaphore> newStartSem = make_shared<binary_semaphore>(0); // Create a semaphore for each core
+		startSem.push_back(newStartSem); // Initialize semaphores for each core
+		shared_ptr<binary_semaphore> newEndSem = make_shared<binary_semaphore>(0); // Create a semaphore for each core
+		endSem.push_back(newEndSem); // Initialize semaphores for each core
+		cores.push_back(make_unique<CPUCoreWorker>(i, quantumCycles, batchProcessFreq, minIns, maxIns, delaysPerExecution, newStartSem, newEndSem));
 	}
-
+	
+	/*
 	for (int id = 0; id < 10; id++)
 	{
 		ConsoleManager* consoleManager = ConsoleManager::getInstance();
@@ -38,13 +43,54 @@ Scheduler::Scheduler(SchedulingAlgorithm algorithm, int numberOfCores, int quant
 
 		consoleManager->addToConsoleTable(screenName, newConsole);
 
-		readyQueue.push(process);
-	}
+		addProcessToReadyQueue(process); // Add the process to the ready queue
+	}*/
+	
 }
 
 void Scheduler::addProcessToReadyQueue(shared_ptr<class Process> process)
 {
+	std::lock_guard<std::mutex> lock(queueMutex);
 	this->readyQueue.push(process);
+}
+
+void Scheduler::assignProcessToCore(int coreID)
+{
+	std::shared_ptr<Process> process;
+
+	// Lock only while accessing the queue
+	{
+		std::lock_guard<std::mutex> qLock(queueMutex);
+		if (readyQueue.empty()) return;
+		process = readyQueue.front();
+		readyQueue.pop();
+	}
+
+	// Lock only while updating running processes
+	{
+		std::lock_guard<std::mutex> rLock(runningMutex);
+		runningProcesses.push_back(process);
+	    // cout << "Process " << process->getName() << " assigned to core " << coreID << " CPU tick:" << totalCycles.load() << endl;
+	}
+
+	cores[coreID]->doProcess(process);  // Core has its own mutex
+}
+
+void Scheduler::checkFinishedProcesses()
+{
+	std::lock_guard<std::mutex> rLock(runningMutex);
+	std::lock_guard<std::mutex> fLock(finishedMutex);
+
+	for (auto it = runningProcesses.begin(); it != runningProcesses.end(); ) {
+		if ((*it)->getProcessState() == Process::FINISHED) {
+			// cout << "Process " << (*it)->getName() << " finished on core " << (*it)->getCPUCoreID() << " CPU tick:" << totalCycles.load() << endl;
+			finishedProcesses.push_back(*it);
+			it = runningProcesses.erase(it);
+		}
+		else {
+			++it;
+		}
+	}
 }
 
 void Scheduler::run()
@@ -74,43 +120,53 @@ void Scheduler::stop()
 
 void Scheduler::fcfs()
 {
+	uint32_t batchCycles = 0;
 	while (this->running.load())
 	{
-		for (int i = 0; i < this->numberOfCores; i++)
-		{
-			lock_guard<mutex> lock(mtx);
-			// If the core is not running a process, assign a process from the ready queue
-			if (!this->readyQueue.empty() && !cores[i]->isRunning())
-			{
-				shared_ptr<Process> process = this->readyQueue.front(); // get the first process in the queue
-				this->readyQueue.pop(); // remove from the first process in the queue
-				if (process != nullptr)
-				{
-					this->runningProcesses.push_back(process);
-					this->cores[i]->doProcess(process);
-				}
-			}
 
-		}
+		checkFinishedProcesses(); // Check for finished processes
 
-		{
-			lock_guard<mutex> lock(mtx);
-
-			// Check for finished processes and move them to finishedProcesses vector
-			for (auto runningProcess = this->runningProcesses.begin(); runningProcess != this->runningProcesses.end();)
-			{
-
-				if ((*runningProcess)->getProcessState() == Process::FINISHED)
-				{
-					this->finishedProcesses.push_back(*runningProcess);
-					runningProcess = this->runningProcesses.erase(runningProcess); // remove finished process from running processes
-				}
-				else
-				{
-					++runningProcess; // move to the next process
-				}
+		for (int i = 0; i < numberOfCores; i++) {
+			if (!cores[i]->isRunning()) {
+				assignProcessToCore(i);  
 			}
 		}
+ 
+		// Tell all cpu core workers to start running an instruction line
+		for (int i = 0; i < startSem.size(); i++) {
+			startSem[i]->release();
+		}
+		for (int i = 0; i < endSem.size(); i++) {
+			endSem[i]->acquire();
+		}
+
+		batchCycles++;
+		if (batchCycles >= (uint32_t) batchProcessFreq && totalProcesses < 10) // temporary
+		{
+			// Generate a process
+			ConsoleManager* consoleManager = ConsoleManager::getInstance();
+
+			uint16_t id = getTotalProcesses();
+
+			string screenName = "process_" + to_string(id);
+
+			vector<shared_ptr<ICommand>> commandList;
+			for (int j = 0; j < 100; j++)
+			{
+				commandList.push_back(make_shared<PrintCommand>(id, "Hello World!"));
+			}
+
+			shared_ptr<Process> process = make_shared<Process>(id, screenName, commandList);
+
+			shared_ptr<ProcessConsole> newConsole = make_shared<ProcessConsole>(process);
+
+			consoleManager->addToConsoleTable(screenName, newConsole);
+			addProcessToReadyQueue(process); // Add the process to the ready queue
+			totalProcesses++;
+			batchCycles = 0; // Reset batch cycles after adding a new process
+		}
+		
+		totalCycles++;
 	}
 }
 
@@ -131,6 +187,8 @@ void Scheduler::printProcessesStatus()
 	std::cout << "Cores available: " << numberOfCores - runningCores << "\n\n";
 	std::cout << "--------------------------\n";
 
+	std::lock_guard<std::mutex> rLock(runningMutex);
+	std::lock_guard<std::mutex> fLock(finishedMutex);
     std::cout << "Running processes:\n";
     for (const auto& process : runningProcesses) {
         int currentInstruction = process->getCurrentLine();
@@ -167,4 +225,15 @@ void Scheduler::printProcessesStatus()
     }
 
     std::cout << "--------------------------\n";
+}
+
+uint64_t Scheduler::getTotalCycles()
+{
+	return this->totalCycles;
+}
+
+uint64_t Scheduler::getTotalProcesses()
+{
+
+	return this->totalProcesses;
 }

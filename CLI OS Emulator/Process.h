@@ -4,7 +4,7 @@
 #include "ICommand.h"
 #include <vector>
 #include <memory>
-
+#include <mutex>	
 using namespace std;
 
 class Process
@@ -49,7 +49,7 @@ public:
 		typedef std::vector<std::shared_ptr<ICommand>> CommandList;
 		CommandList commandList; // List of commands to be executed by the process
 		ProcessState processState = READY; 
-		
+		mutable std::mutex mtx; // Mutex for thread safety when accessing process state and commands
 		
 	
 };

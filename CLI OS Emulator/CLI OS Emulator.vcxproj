@@ -143,6 +143,7 @@
   <ItemGroup>
     <ClInclude Include="Console.h" />
     <ClInclude Include="ConsoleManager.h" />
+    <ClInclude Include="constants.h" />
     <ClInclude Include="CPUCoreWorker.h" />
     <ClInclude Include="ICommand.h" />
     <ClInclude Include="MainConsole.h" />

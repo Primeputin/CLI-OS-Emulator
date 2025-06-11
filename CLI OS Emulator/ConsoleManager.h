@@ -38,7 +38,7 @@ class ConsoleManager
 		void initScheduler();
 		void runScheduler();
 		void stopScheduler();
-		void listProcesses();
+		void listProcesses(bool outToFile);
 
 		bool isSchedulerInitialized();
 		void generateProcesses();

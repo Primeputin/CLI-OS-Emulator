@@ -200,62 +200,60 @@ void Scheduler::fcfs()
 	}
 }
 
-void Scheduler::printProcessesStatus()
+void Scheduler::printProcessesStatus(std::ostream& out)
 {
 	int runningCores = 0;
 
-	for (int i = 0; i < numberOfCores; i++)
-	{
-		if (cores[i]->isRunning()) 
-		{
+	for (int i = 0; i < numberOfCores; i++) {
+		if (cores[i]->isRunning()) {
 			runningCores++;
 		}
 	}
 
-	std::cout << "CPU Utilization: " << (runningCores * 100) / numberOfCores << "%\n";
-	std::cout << "Cores used: " << runningCores << "\n";
-	std::cout << "Cores available: " << numberOfCores - runningCores << "\n\n";
-	std::cout << "--------------------------\n";
+	out << "CPU Utilization: " << (runningCores * 100) / numberOfCores << "%\n";
+	out << "Cores used: " << runningCores << "\n";
+	out << "Cores available: " << numberOfCores - runningCores << "\n\n";
+	out << "--------------------------\n";
 
 	std::lock_guard<std::mutex> rLock(runningMutex);
 	std::lock_guard<std::mutex> fLock(finishedMutex);
-    std::cout << "Running processes:\n";
-    for (const auto& process : runningProcesses) {
-        int currentInstruction = process->getCurrentLine();
-        int totalInstructions = process->getTotalLines();
-        int CPUCoreID = process->getCPUCoreID();
-        string processName = process->getName();
-        time_t createdTime = process->getCreatedTime();
 
-        tm now;
-        localtime_s(&now, &createdTime);
-
-        std::cout << left << setw(12) << processName                        
-            << " (" << put_time(&now, "%m/%d/%Y %I:%M:%S%p") << ")    "     
-            << std::setw(6) << "Core:" << std::setw(0) << CPUCoreID << "   "
-            << currentInstruction << "/" << totalInstructions << "\n";         
-    }
-
-    std::cout << "\nFinished processes:\n";
-    for (const auto& process : finishedProcesses) {
+	out << "Running processes:\n";
+	for (const auto& process : runningProcesses) {
 		int currentInstruction = process->getCurrentLine();
 		int totalInstructions = process->getTotalLines();
 		int CPUCoreID = process->getCPUCoreID();
-		string processName = process->getName();
+		std::string processName = process->getName();
 		time_t createdTime = process->getCreatedTime();
 
-        tm now;
-        localtime_s(&now, &createdTime);
+		tm now;
+		localtime_s(&now, &createdTime);
 
-        std::cout << std::left << setw(12) << processName                     
-            << " (" << put_time(&now, "%m/%d/%Y %I:%M:%S%p") << ")    "     
-            << std::setw(10) << "Finished"                                    
-            << currentInstruction << "/" << totalInstructions << "\n";         
+		out << std::left << std::setw(12) << processName
+			<< " (" << std::put_time(&now, "%m/%d/%Y %I:%M:%S%p") << ")    "
+			<< std::setw(6) << "Core:" << std::setw(0) << CPUCoreID << "   "
+			<< currentInstruction << "/" << totalInstructions << "\n";
+	}
 
-    }
+	out << "\nFinished processes:\n";
+	for (const auto& process : finishedProcesses) {
+		int currentInstruction = process->getCurrentLine();
+		int totalInstructions = process->getTotalLines();
+		std::string processName = process->getName();
+		time_t createdTime = process->getCreatedTime();
 
-    std::cout << "--------------------------\n";
+		tm now;
+		localtime_s(&now, &createdTime);
+
+		out << std::left << std::setw(12) << processName
+			<< " (" << std::put_time(&now, "%m/%d/%Y %I:%M:%S%p") << ")    "
+			<< std::setw(10) << "Finished"
+			<< currentInstruction << "/" << totalInstructions << "\n";
+	}
+
+	out << "--------------------------\n";
 }
+
 
 uint64_t Scheduler::getTotalCycles()
 {

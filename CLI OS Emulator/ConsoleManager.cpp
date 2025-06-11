@@ -185,10 +185,24 @@ void ConsoleManager::stopScheduler()
 	this->scheduler->stop(); // stop the scheduler
 }
 
-void ConsoleManager::listProcesses()
+void ConsoleManager::listProcesses(bool outToFile)
 {
 	if (scheduler) {
-		scheduler->printProcessesStatus();
+		if (outToFile)
+		{
+			ofstream outFile("csopesy-log.txt");  // Open the file for writing
+			if (!outFile.is_open()) {
+				std::cerr << "Error: Could not open process_status.txt for writing.\n";
+				return;
+			}
+			scheduler->printProcessesStatus(outFile);
+			outFile.close();
+		}
+		else
+		{
+			scheduler->printProcessesStatus(cout);	
+		}
+
 	}
 	else {
 		cerr << "Scheduler is not initialized." << endl;

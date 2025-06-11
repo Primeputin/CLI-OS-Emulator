@@ -77,6 +77,7 @@ void MainConsole::schedulerStop(string command)
 void MainConsole::reportUtil(string command)
 {
     recognizedCommand(command);
+	ConsoleManager::getInstance()->listProcesses(true);
 }
 
 void MainConsole::processCommand (string command)
@@ -138,7 +139,7 @@ void MainConsole::processCommand (string command)
 	else if (texts.size() == 2 && texts[0] == "screen" && texts[1] == "-ls")
 	{
         recognizedCommand(command);
-        ConsoleManager::getInstance()->listProcesses();
+        ConsoleManager::getInstance()->listProcesses(false);
 	}
 	else if (texts.size() == 3 && texts[0] == "screen")
 	{

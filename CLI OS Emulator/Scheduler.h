@@ -36,7 +36,7 @@ class Scheduler
 		void run();
 		void stop();
 		void fcfs();
-		void printProcessesStatus();
+		void printProcessesStatus(std::ostream& out);
 		uint64_t getTotalCycles();
 		uint64_t getTotalProcesses();
 	private:

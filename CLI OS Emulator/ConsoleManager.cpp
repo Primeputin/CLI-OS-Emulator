@@ -53,29 +53,15 @@ ConsoleManager::ConsoleManager() {
 
 void ConsoleManager::createProcess(string name)
 {
-	if (consoleTable.find(name) != this->consoleTable.end()) {
-		std::cerr << "Screen name " << name << " already exists. Please use a different name." << std::endl;
-		return;
-	}
 
-	// <-- Temporary -->
-	vector<shared_ptr<ICommand>> commandList;
-	for (int j = 0; j < 100; j++)
+	shared_ptr<Console> newConsole = this->scheduler->generateRandomProcess(name);
+
+	if (newConsole)
 	{
-		commandList.push_back(make_shared<PrintCommand>(100, "Hello World!"));
+
+		cout << "Screen name: " << name << " created successfully." << std::endl;
+		switchToProcessConsole(newConsole->getName());
 	}
-
-	shared_ptr<Process> process = make_shared<Process>(100, name, commandList);
-
-	// <-- Temporary -->
-
-	shared_ptr<ProcessConsole> newConsole = make_shared<ProcessConsole>(process);
-
-	consoleTable.insert({ newConsole->getName(), newConsole}); // temporary
-
-	cout << "Screen name: " << name << " created successfully." << std::endl;
-
-	switchToProcessConsole(newConsole->getName());
 }
 
 void ConsoleManager::switchToMain()
@@ -105,6 +91,14 @@ void ConsoleManager::addToConsoleTable(string name, shared_ptr<Console> console)
 	else {
 		cerr << "Console with name " << name << " already exists." << endl;
 	}
+}
+
+bool ConsoleManager::consoleExists(string name) const
+{
+	if (consoleTable.find(name) != this->consoleTable.end()) {
+		return true;
+	}
+	return false;
 }
 
 void ConsoleManager::stop()
@@ -149,16 +143,16 @@ void ConsoleManager::readConfigFile()
 
 	int numOfCore = config["num-cpu"].empty() ? 1 : stoi(config["num-cpu"]);
 	string algorithm = config["scheduler"];
-	int quantumCycles = config["quantum-cycles"].empty() ? 1 : stoi(config["quantum-cycles"]);
-	int batchProcessFreq = config["batch-process-freq"].empty() ? 1 : stoi(config["batch-process-freq"]);
-	int minIns = config["min-ins"].empty() ? 1 : stoi(config["min-ins"]);
-	int maxIns = config["max-ins"].empty() ? 1 : stoi(config["max-ins"]);
-	int delayPerExecution = config["delay-per-exec"].empty() ? 0 : stoi(config["delay-per-exec"]);
+	uint64_t quantumCycles = config["quantum-cycles"].empty() ? 1 : std::stoull(config["quantum-cycles"]);
+	uint64_t batchProcessFreq = config["batch-process-freq"].empty() ? 1 : std::stoull(config["batch-process-freq"]);
+	uint64_t minIns = config["min-ins"].empty() ? 1 : std::stoull(config["min-ins"]);
+	uint64_t maxIns = config["max-ins"].empty() ? 1 : std::stoull(config["max-ins"]);
+	uint64_t delayPerExecution = config["delay-per-exec"].empty() ? 0 : std::stoull(config["delay-per-exec"]);
 
 	if (algorithm == "fcfs") {
 		scheduler = make_shared<Scheduler>(Scheduler::FCFS, numOfCore, quantumCycles, batchProcessFreq, minIns, maxIns, delayPerExecution);
 	}
-	else if (algorithm == "r") {
+	else if (algorithm == "rr") {
 		scheduler = make_shared<Scheduler>(Scheduler::RR, numOfCore, quantumCycles, batchProcessFreq, minIns, maxIns, delayPerExecution);
 	}
 	else {
@@ -208,6 +202,16 @@ bool ConsoleManager::isSchedulerInitialized()
 		return true;
 	}
 	return false;
+}
+
+void ConsoleManager::generateProcesses()
+{
+	this->scheduler->generateProcesses();
+}
+
+void ConsoleManager::stopGenerationOfProcesses()
+{
+	this->scheduler->stopGenerationOfProcesses();
 }
 
 

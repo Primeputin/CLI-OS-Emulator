@@ -31,6 +31,7 @@ class ConsoleManager
 		void switchToMain();
 		void switchToProcessConsole(string name);
 		void addToConsoleTable(string name, shared_ptr<Console> console);
+		bool consoleExists(string name) const;
 		void stop();
 
 		void readConfigFile();
@@ -40,5 +41,7 @@ class ConsoleManager
 		void listProcesses();
 
 		bool isSchedulerInitialized();
+		void generateProcesses();
+		void stopGenerationOfProcesses();
 };
 

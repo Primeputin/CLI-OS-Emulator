@@ -42,8 +42,8 @@ public:
 	private:
 		int pid = -1; 
 		string name;
-		uint16_t currentLine;
-		uint16_t totalLines;
+		uint64_t currentLine;
+		uint64_t totalLines;
 		time_t createdTime;
 		int cpuCoreID = -1; // -1 means not assigned to any CPU core
 		typedef std::vector<std::shared_ptr<ICommand>> CommandList;

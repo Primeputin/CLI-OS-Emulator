@@ -2,7 +2,7 @@
 #include <thread>
 #include <iostream>
 
-CPUCoreWorker::CPUCoreWorker(int coreID, int quantumCycles, int batchProcessFreq, int minIns, int maxIns, int delayPerExecution, shared_ptr<binary_semaphore> startSem, shared_ptr<binary_semaphore> endSem)
+CPUCoreWorker::CPUCoreWorker(int coreID, uint64_t quantumCycles, uint64_t batchProcessFreq, uint64_t minIns, uint64_t maxIns, uint64_t delayPerExecution, shared_ptr<binary_semaphore> startSem, shared_ptr<binary_semaphore> endSem)
 	: coreID(coreID), quantumCycles(quantumCycles), batchProcessFreq(batchProcessFreq),
 	minIns(minIns), maxIns(maxIns), delayPerExecution(delayPerExecution), startSem(startSem), endSem(endSem), running(false)
 {
@@ -30,12 +30,12 @@ void CPUCoreWorker::run()
 	{
 		startSem->acquire(); // Wait for the signal to start running
 		currentCycle++; // Increment the cycle count for this core
-		if (currentCycle.load() >= (uint64_t) delayPerExecution + 1)
+		if (currentCycle.load() >= delayPerExecution + 1)
 		{
 			if (running.load())
 			{
 				this->currentProcess->executeCurrentCommand(); // Execute the current command of the process
-				this->currentProcess->moveToNextLine(); // Move t0")
+				this->currentProcess->moveToNextLine(); // Move to the next instruction line
 				if (this->currentProcess->isFinished())
 				{
 					this->currentProcess->setProcessState(Process::FINISHED); // Set the process state to finished

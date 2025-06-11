@@ -7,13 +7,13 @@
 
 using namespace std;
 
-Scheduler::Scheduler(SchedulingAlgorithm algorithm, int numberOfCores, int quantumCycles, int batchProcessFreq, int minIns, int maxIns, int delaysPerExecution) : numberOfCores(numberOfCores),
+Scheduler::Scheduler(SchedulingAlgorithm algorithm, int numberOfCores, uint64_t quantumCycles, uint64_t batchProcessFreq, uint64_t minIns, uint64_t maxIns, uint64_t delayPerExecution) : numberOfCores(numberOfCores),
 	algorithm(algorithm),
 	quantumCycles(quantumCycles),
 	batchProcessFreq(batchProcessFreq),
 	minIns(minIns),
 	maxIns(maxIns),
-	delayPerExecution(delaysPerExecution)
+	delayPerExecution(delayPerExecution)
 {
 	for (int i = 0; i < numberOfCores; i++) 
 	{
@@ -21,7 +21,7 @@ Scheduler::Scheduler(SchedulingAlgorithm algorithm, int numberOfCores, int quant
 		startSem.push_back(newStartSem); // Initialize semaphores for each core
 		shared_ptr<binary_semaphore> newEndSem = make_shared<binary_semaphore>(0); // Create a semaphore for each core
 		endSem.push_back(newEndSem); // Initialize semaphores for each core
-		cores.push_back(make_unique<CPUCoreWorker>(i, quantumCycles, batchProcessFreq, minIns, maxIns, delaysPerExecution, newStartSem, newEndSem));
+		cores.push_back(make_unique<CPUCoreWorker>(i, quantumCycles, batchProcessFreq, minIns, maxIns, delayPerExecution, newStartSem, newEndSem));
 	}
 	
 	/*
@@ -93,6 +93,47 @@ void Scheduler::checkFinishedProcesses()
 	}
 }
 
+void Scheduler::generateProcesses()
+{
+	this->generate.store(true); // Set generate to true when starting the process generation
+}
+
+void Scheduler::stopGenerationOfProcesses()
+{
+	this->generate.store(false); // Set generate to false when stopping the process generation
+}
+
+shared_ptr<Console> Scheduler::generateRandomProcess(string name)
+{
+
+	// Generate a process
+	ConsoleManager* consoleManager = ConsoleManager::getInstance();
+
+	if (consoleManager->consoleExists(name)) {
+		std::cerr << "Process with name " << name << " already exists. Please use a different name." << std::endl;
+		return nullptr; // Return nullptr if the process already exists
+	}
+
+
+	uint64_t id = getTotalProcesses();
+
+	vector<shared_ptr<ICommand>> commandList;
+	for (int j = 0; j < 100; j++)
+	{
+		commandList.push_back(make_shared<PrintCommand>(id, "Hello world from " + name + " !"));
+	}
+
+	shared_ptr<Process> process = make_shared<Process>(id, name, commandList);
+
+	shared_ptr<ProcessConsole> newConsole = make_shared<ProcessConsole>(process);
+
+	consoleManager->addToConsoleTable(name, newConsole);
+	addProcessToReadyQueue(process); // Add the process to the ready queue
+	totalProcesses++;
+	return newConsole; // Return the new console for the process
+	
+}
+
 void Scheduler::run()
 {
 	this->running.store(true); // Set running to true when starting the scheduler
@@ -141,28 +182,17 @@ void Scheduler::fcfs()
 		}
 
 		batchCycles++;
-		if (batchCycles >= (uint32_t) batchProcessFreq && totalProcesses < 10) // temporary
+		if (batchCycles >= batchProcessFreq)
 		{
-			// Generate a process
-			ConsoleManager* consoleManager = ConsoleManager::getInstance();
-
-			uint16_t id = getTotalProcesses();
-
-			string screenName = "process_" + to_string(id);
-
-			vector<shared_ptr<ICommand>> commandList;
-			for (int j = 0; j < 100; j++)
+			if (generate.load())
 			{
-				commandList.push_back(make_shared<PrintCommand>(id, "Hello World!"));
+				string name = "process_" + to_string(latestProcessID.load());
+				while (ConsoleManager::getInstance()->consoleExists(name)) {
+					latestProcessID++;
+					name = "process_" + to_string(latestProcessID.load());
+				}
+				generateRandomProcess(name);
 			}
-
-			shared_ptr<Process> process = make_shared<Process>(id, screenName, commandList);
-
-			shared_ptr<ProcessConsole> newConsole = make_shared<ProcessConsole>(process);
-
-			consoleManager->addToConsoleTable(screenName, newConsole);
-			addProcessToReadyQueue(process); // Add the process to the ready queue
-			totalProcesses++;
 			batchCycles = 0; // Reset batch cycles after adding a new process
 		}
 		

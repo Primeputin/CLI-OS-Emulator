@@ -64,12 +64,14 @@ void MainConsole::schedulerStart(string command)
 {
     recognizedCommand(command);
     // TODO: Create randomized processes
+    ConsoleManager::getInstance()->generateProcesses();
 }
 
 void MainConsole::schedulerStop(string command)
 {
     recognizedCommand(command);
     // TODO: Stop making randomized processes
+    ConsoleManager::getInstance()->stopGenerationOfProcesses();
 }
 
 void MainConsole::reportUtil(string command)

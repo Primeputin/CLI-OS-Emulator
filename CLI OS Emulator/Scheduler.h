@@ -9,6 +9,7 @@
 #include <atomic>
 #include <mutex>
 #include <semaphore>
+#include "Console.h"
 #include "CPUCoreWorker.h"
 #include "Process.h"
 #include "constants.h"
@@ -24,11 +25,14 @@ class Scheduler
 			FCFS, // First Come First Serve
 			RR,   // Round Robin
 		};
-		Scheduler(SchedulingAlgorithm algorithm, int numberOfCores, int quantumCycles, int batchProcessFreq, int minIns, int maxIns, int delaysPerExecution);
+		Scheduler(SchedulingAlgorithm algorithm, int numberOfCores, uint64_t quantumCycles, uint64_t batchProcessFreq, uint64_t minIns, uint64_t maxIns, uint64_t delaysPerExecution);
 
 		void addProcessToReadyQueue(shared_ptr<class Process> process);
 		void assignProcessToCore(int coreID);
 		void checkFinishedProcesses();
+		void generateProcesses();
+		void stopGenerationOfProcesses();
+		shared_ptr<Console> generateRandomProcess(string name);
 		void run();
 		void stop();
 		void fcfs();
@@ -38,15 +42,17 @@ class Scheduler
 	private:
 		int numberOfCores;
 		SchedulingAlgorithm algorithm;
-		int quantumCycles;
-		int batchProcessFreq;
-		int minIns;
-		int maxIns;
-		int delayPerExecution;
+		uint64_t quantumCycles;
+		uint64_t batchProcessFreq;
+		uint64_t minIns;
+		uint64_t maxIns;
+		uint64_t delayPerExecution;
 		atomic <uint64_t> totalCycles = 0; // Total cycles executed by the scheduler
 		atomic <uint64_t> totalProcesses = 0; // Total processes created
+		atomic <uint64_t> latestProcessID = 0; // Total processes created
 		thread schedulerThread;
 		atomic<bool> running = false;
+		atomic<bool> generate = false;
 		std::mutex queueMutex;       // Protects readyQueue
 		std::mutex runningMutex;     // Protects runningProcesses
 		std::mutex finishedMutex;    // Protects finishedProcesses

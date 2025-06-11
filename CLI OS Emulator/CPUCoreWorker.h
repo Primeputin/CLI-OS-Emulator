@@ -10,7 +10,7 @@ using namespace std;
 class CPUCoreWorker
 {
 	public:
-		CPUCoreWorker(int coreID, int quantumCycles, int batchProcessFreq, int minIns, int maxIns, int delayPerExecution, shared_ptr<binary_semaphore> startSem, shared_ptr<binary_semaphore> endSem);
+		CPUCoreWorker(int coreID, uint64_t quantumCycles, uint64_t batchProcessFreq, uint64_t minIns, uint64_t maxIns, uint64_t delayPerExecution, shared_ptr<binary_semaphore> startSem, shared_ptr<binary_semaphore> endSem);
 
 		void doProcess(shared_ptr<class Process> process);
 		void run();
@@ -21,11 +21,11 @@ class CPUCoreWorker
 
 	private:
 		int coreID;
-		int quantumCycles;
-		int batchProcessFreq;
-		int minIns;
-		int maxIns;
-		int delayPerExecution;
+		uint64_t quantumCycles;
+		uint64_t batchProcessFreq;
+		uint64_t minIns;
+		uint64_t maxIns;
+		uint64_t delayPerExecution;
 		atomic<uint64_t> currentCycle;
 
 		shared_ptr<class Process> currentProcess; // process being processed

@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /CLI OS Emulator/output
 /CLI OS Emulator/config.txt
+/CLI OS Emulator/csopesy-log.txt

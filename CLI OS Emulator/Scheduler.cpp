@@ -54,6 +54,13 @@ void Scheduler::addProcessToReadyQueue(shared_ptr<class Process> process)
 	this->readyQueue.push(process);
 }
 
+void Scheduler::removeProcessFromRunningQueue(shared_ptr<class Process> process)
+{
+	std::lock_guard<std::mutex> rLock(runningMutex);
+	runningProcesses.erase(std::remove(runningProcesses.begin(), runningProcesses.end(), process), runningProcesses.end());
+
+}
+
 void Scheduler::assignProcessToCore(int coreID)
 {
 	std::shared_ptr<Process> process;
@@ -143,7 +150,7 @@ void Scheduler::run()
 			this->schedulerThread = thread(&Scheduler::fcfs, this);
 			break;
 		case SchedulingAlgorithm::RR:
-			// Implement Round Robin scheduling here
+			this->schedulerThread = thread(&Scheduler::rr, this);
 			break;
 		default:
 			std::cerr << "Unknown scheduling algorithm." << std::endl;
@@ -182,7 +189,7 @@ void Scheduler::fcfs()
 		}
 
 		batchCycles++;
-		if (batchCycles >= batchProcessFreq)
+		if (batchCycles >= batchProcessFreq && totalProcesses < 10)
 		{
 			if (generate.load())
 			{
@@ -196,6 +203,59 @@ void Scheduler::fcfs()
 			batchCycles = 0; // Reset batch cycles after adding a new process
 		}
 		
+		totalCycles++;
+	}
+}
+
+void Scheduler::rr()
+{
+	uint32_t batchCycles = 0;
+	while (this->running.load())
+	{
+
+		checkFinishedProcesses(); // Check for finished processes
+
+		// This is for Round Robin scheduling only
+		for (int i = 0; i < numberOfCores; i++) {
+			if (cores[i]->shouldInterrupt()) { // If the process should be interrupted
+				cores[i]->stop(); // Stop the core worker
+				cores[i]->setProcessBackToReadyState(); // Reset the process state to ready	
+				removeProcessFromRunningQueue(cores[i]->getCurrentProcess()); // Remove the process from the list of running processes
+				addProcessToReadyQueue(cores[i]->getCurrentProcess()); // Add the current process back to the ready queue
+				// cout << "Process " << cores[i]->getCurrentProcess()->getName() << " interrupted on core " << i << " CPU tick:" << totalCycles.load() << endl;
+			}
+		}
+		// part for added rr ends here
+
+		for (int i = 0; i < numberOfCores; i++) {
+			if (!cores[i]->isRunning()) {
+				assignProcessToCore(i);
+			}
+		}
+
+		// Tell all cpu core workers to start running an instruction line
+		for (int i = 0; i < startSem.size(); i++) {
+			startSem[i]->release();
+		}
+		for (int i = 0; i < endSem.size(); i++) {
+			endSem[i]->acquire();
+		}
+
+		batchCycles++;
+		if (batchCycles >= batchProcessFreq)
+		{
+			if (generate.load())
+			{
+				string name = "process_" + to_string(latestProcessID.load());
+				while (ConsoleManager::getInstance()->consoleExists(name)) {
+					latestProcessID++;
+					name = "process_" + to_string(latestProcessID.load());
+				}
+				generateRandomProcess(name);
+			}
+			batchCycles = 0; // Reset batch cycles after adding a new process
+		}
+
 		totalCycles++;
 	}
 }

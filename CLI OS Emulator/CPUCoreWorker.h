@@ -18,6 +18,9 @@ class CPUCoreWorker
 
 		int getCoreID() const;
 		bool isRunning() const;
+		shared_ptr<class Process> getCurrentProcess() const;
+		bool shouldInterrupt() const;
+		void setProcessBackToReadyState();
 
 	private:
 		int coreID;
@@ -27,7 +30,7 @@ class CPUCoreWorker
 		uint64_t maxIns;
 		uint64_t delayPerExecution;
 		atomic<uint64_t> currentCycle;
-
+		atomic<uint64_t> currentQuantumCycles;
 		shared_ptr<class Process> currentProcess; // process being processed
 		// bool running = false;
 		atomic<bool> running = false;

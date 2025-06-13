@@ -28,6 +28,7 @@ class Scheduler
 		Scheduler(SchedulingAlgorithm algorithm, int numberOfCores, uint64_t quantumCycles, uint64_t batchProcessFreq, uint64_t minIns, uint64_t maxIns, uint64_t delaysPerExecution);
 
 		void addProcessToReadyQueue(shared_ptr<class Process> process);
+		void removeProcessFromRunningQueue(shared_ptr<class Process> process);
 		void assignProcessToCore(int coreID);
 		void checkFinishedProcesses();
 		void generateProcesses();
@@ -36,6 +37,7 @@ class Scheduler
 		void run();
 		void stop();
 		void fcfs();
+		void rr();
 		void printProcessesStatus(std::ostream& out);
 		uint64_t getTotalCycles();
 		uint64_t getTotalProcesses();

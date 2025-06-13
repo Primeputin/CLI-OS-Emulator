@@ -6,7 +6,7 @@ CPUCoreWorker::CPUCoreWorker(int coreID, uint64_t quantumCycles, uint64_t batchP
 	: coreID(coreID), quantumCycles(quantumCycles), batchProcessFreq(batchProcessFreq),
 	minIns(minIns), maxIns(maxIns), delayPerExecution(delayPerExecution), startSem(startSem), endSem(endSem), running(false)
 {
-
+	this->currentQuantumCycles.store(this->quantumCycles);
 	thread(&CPUCoreWorker::run, this).detach(); // thread for running the process
 
 }
@@ -19,6 +19,8 @@ void CPUCoreWorker::doProcess(std::shared_ptr<class Process> process)
 	}
 	this->currentProcess = process;
 	this->running.store(true);
+	this->currentCycle.store(0); // Reset the current cycle count for the new process
+	this->currentQuantumCycles.store(this->quantumCycles); // Reset quantum cycles for the new process
 
 	process->setCPUCoreID(this->coreID); // Set the CPU core ID for the process
 	process->setProcessState(Process::ProcessState::RUNNING);
@@ -34,6 +36,7 @@ void CPUCoreWorker::run()
 		{
 			if (running.load())
 			{
+				
 				this->currentProcess->executeCurrentCommand(); // Execute the current command of the process
 				this->currentProcess->moveToNextLine(); // Move to the next instruction line
 				if (this->currentProcess->isFinished())
@@ -41,8 +44,13 @@ void CPUCoreWorker::run()
 					this->currentProcess->setProcessState(Process::FINISHED); // Set the process state to finished
 					stop();
 				}
+				currentCycle = 0;
 			}
-			currentCycle = 0;
+		}
+		if (running.load())
+		{
+
+			this->currentQuantumCycles--; // Decrement the quantum cycles for the process
 		}
 		endSem->release(); // Signal that the core has finished processing
 	}
@@ -63,3 +71,25 @@ bool CPUCoreWorker::isRunning() const
 {
 	return this->running.load();
 }
+
+shared_ptr<class Process> CPUCoreWorker::getCurrentProcess() const
+{
+	return this->currentProcess;
+}
+
+bool CPUCoreWorker::shouldInterrupt() const
+{
+	if (this->running.load() && this->currentQuantumCycles.load() == 0) {
+		return true; // Interrupt if not running, quantum cycles are zero, or no current process
+	}
+	return false;
+}
+
+void CPUCoreWorker::setProcessBackToReadyState()
+{
+
+	this->currentProcess->setProcessState(Process::READY); // Set the process state to ready
+
+}
+
+

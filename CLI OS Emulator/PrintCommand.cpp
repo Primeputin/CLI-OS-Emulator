@@ -4,9 +4,10 @@
 #include <iomanip>
 #include <ctime>
 
-PrintCommand::PrintCommand(int pid, string toPrint)
+PrintCommand::PrintCommand(int pid, string toPrint, Process* process)
 	: ICommand(pid, ICommand::PRINT), toPrint(toPrint)
 {
+	this->process = process;
 }
 
 void PrintCommand::execute()
@@ -14,7 +15,7 @@ void PrintCommand::execute()
 	cout << this->toPrint << endl;
 }
 
-void PrintCommand::logExecute(int cpuCoreID, string fileName) const
+void PrintCommand::logExecute(int cpuCoreID, string fileName)
 {
 	ofstream outFile("output/" + fileName + ".txt", ios::app); // Create and open a file for writing
 

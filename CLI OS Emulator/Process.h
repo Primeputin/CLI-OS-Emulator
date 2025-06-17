@@ -1,10 +1,13 @@
 #pragma once
+
+#include <unordered_map>
 #include <string>
 #include <ctime>
 #include "ICommand.h"
 #include <vector>
 #include <memory>
 #include <mutex>	
+
 using namespace std;
 
 class Process
@@ -19,10 +22,11 @@ public:
 		FINISHED
 	};
 
-	Process(int pid, string name, std::vector<std::shared_ptr<ICommand>> commandList);
+	Process(int pid, string name, uint64_t totalLines);
 
+	int getPID() const;
 	bool isFinished() const;
-	int getRemainingLines() const;
+	uint64_t getRemainingLines() const;
 	ProcessState getProcessState() const;
 	void setProcessState(ProcessState newState);
 
@@ -31,11 +35,14 @@ public:
 	void moveToNextLine();
 	void setCPUCoreID(int coreID);
 
-	// void test_generateRandomCommands(int count);
+	void declareVariable(const std::string& varName, uint16_t value);
+	bool getVariableValue(const std::string& varName, uint16_t& outValue) const;
+	void decrementSleepTick();
+	bool isSleeping() const;
 
 	string getName() const;
-	uint16_t getCurrentLine() const;
-	uint16_t getTotalLines() const;
+	uint64_t getCurrentLine() const;
+	uint64_t getTotalLines() const;
 	time_t getCreatedTime() const;
 	int getCPUCoreID();
 
@@ -49,7 +56,9 @@ public:
 		typedef std::vector<std::shared_ptr<ICommand>> CommandList;
 		CommandList commandList; // List of commands to be executed by the process
 		ProcessState processState = READY; 
+		unordered_map<string, uint16_t> symbolTable;
 		mutable std::mutex mtx; // Mutex for thread safety when accessing process state and commands
+		mutable std::mutex varAccess; // Mutex for symbol table access
 		
 	
 };

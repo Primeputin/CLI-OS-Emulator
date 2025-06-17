@@ -30,7 +30,7 @@ class Scheduler
 		void addProcessToReadyQueue(shared_ptr<class Process> process);
 		void removeProcessFromRunningQueue(shared_ptr<class Process> process);
 		void assignProcessToCore(int coreID);
-		void checkFinishedProcesses();
+		void checkProcessesToBeRemovedFromRunning();
 		void generateProcesses();
 		void stopGenerationOfProcesses();
 		shared_ptr<Console> generateRandomProcess(string name);
@@ -62,6 +62,7 @@ class Scheduler
 		vector<shared_ptr<binary_semaphore>> endSem; // Semaphores for each core
 		vector<unique_ptr<CPUCoreWorker>> cores;
 		queue<shared_ptr<Process>> readyQueue;
+		vector<shared_ptr<Process>> waitingProcesses;
 		vector<shared_ptr<Process>> runningProcesses;
 		vector<shared_ptr<Process>> finishedProcesses;
 };

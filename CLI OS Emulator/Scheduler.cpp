@@ -27,23 +27,12 @@ Scheduler::Scheduler(SchedulingAlgorithm algorithm, int numberOfCores, uint64_t 
 	/*
 	for (int id = 0; id < 10; id++)
 	{
-		ConsoleManager* consoleManager = ConsoleManager::getInstance();
-
-		string screenName = "process_" + to_string(id);
-
-		vector<shared_ptr<ICommand>> commandList;
-		for (int j = 0; j < 100; j++)
-		{
-			commandList.push_back(make_shared<PrintCommand>(id, "Hello World!"));
+		string name = "process_" + to_string(latestProcessID.load());
+		while (ConsoleManager::getInstance()->consoleExists(name)) {
+			latestProcessID++;
+			name = "process_" + to_string(latestProcessID.load());
 		}
-
-		shared_ptr<Process> process = make_shared<Process>(id, screenName, commandList);
-
-		shared_ptr<ProcessConsole> newConsole = make_shared<ProcessConsole>(process);
-
-		consoleManager->addToConsoleTable(screenName, newConsole);
-
-		addProcessToReadyQueue(process); // Add the process to the ready queue
+		generateRandomProcess(name);
 	}*/
 	
 }
@@ -83,7 +72,7 @@ void Scheduler::assignProcessToCore(int coreID)
 	cores[coreID]->doProcess(process);  // Core has its own mutex
 }
 
-void Scheduler::checkFinishedProcesses()
+void Scheduler::checkProcessesToBeRemovedFromRunning()
 {
 	std::lock_guard<std::mutex> rLock(runningMutex);
 	std::lock_guard<std::mutex> fLock(finishedMutex);
@@ -92,6 +81,11 @@ void Scheduler::checkFinishedProcesses()
 		if ((*it)->getProcessState() == Process::FINISHED) {
 			// cout << "Process " << (*it)->getName() << " finished on core " << (*it)->getCPUCoreID() << " CPU tick:" << totalCycles.load() << endl;
 			finishedProcesses.push_back(*it);
+			it = runningProcesses.erase(it);
+		}
+		else if ((*it)->getProcessState() == Process::WAITING) {
+			// cout << "Process " << (*it)->getName() << " is waiting on core " << (*it)->getCPUCoreID() << " CPU tick:" << totalCycles.load() << endl;
+			waitingProcesses.push_back(*it);
 			it = runningProcesses.erase(it);
 		}
 		else {
@@ -124,13 +118,9 @@ shared_ptr<Console> Scheduler::generateRandomProcess(string name)
 
 	uint64_t id = getTotalProcesses();
 
-	vector<shared_ptr<ICommand>> commandList;
-	for (int j = 0; j < 100; j++)
-	{
-		commandList.push_back(make_shared<PrintCommand>(id, "Hello world from " + name + " !"));
-	}
+	uint64_t totalLines = minIns + (rand() % (maxIns - minIns + 1)); // Randomly generate the total number of lines for the process
 
-	shared_ptr<Process> process = make_shared<Process>(id, name, commandList);
+	shared_ptr<Process> process = make_shared<Process>(id, name, totalLines);
 
 	shared_ptr<ProcessConsole> newConsole = make_shared<ProcessConsole>(process);
 
@@ -171,8 +161,23 @@ void Scheduler::fcfs()
 	uint32_t batchCycles = 0;
 	while (this->running.load())
 	{
+		for (auto it = waitingProcesses.begin(); it != waitingProcesses.end(); ) {
+			if ((*it)->getProcessState() == Process::WAITING) {
+				(*it)->decrementSleepTick();
+				if (!(*it)->isSleeping()) {
+					// cout << "Process " << (*it)->getName() << " is ready to run again on CPU tick: " << totalCycles.load() << endl;
+					(*it)->setProcessState(Process::READY);
+					(*it)->moveToNextLine(); // Move to the next instruction line
+					addProcessToReadyQueue(*it); // Move to ready queue
 
-		checkFinishedProcesses(); // Check for finished processes
+					it = waitingProcesses.erase(it); // Remove and move to next
+					continue;
+				}
+			}
+			++it; // Only increment if not erased
+		}
+
+		checkProcessesToBeRemovedFromRunning(); // Check for finished processes
 
 		for (int i = 0; i < numberOfCores; i++) {
 			if (!cores[i]->isRunning()) {
@@ -212,8 +217,23 @@ void Scheduler::rr()
 	uint32_t batchCycles = 0;
 	while (this->running.load())
 	{
+		for (auto it = waitingProcesses.begin(); it != waitingProcesses.end(); ) {
+			if ((*it)->getProcessState() == Process::WAITING) {
+				(*it)->decrementSleepTick();
+				if (!(*it)->isSleeping()) {
+					// cout << "Process " << (*it)->getName() << " is ready to run again on CPU tick: " << totalCycles.load() << endl;
+					(*it)->setProcessState(Process::READY);
+					(*it)->moveToNextLine(); // Move to the next instruction line
+					addProcessToReadyQueue(*it); // Move to ready queue
 
-		checkFinishedProcesses(); // Check for finished processes
+					it = waitingProcesses.erase(it); // Remove and move to next
+					continue;
+				}
+			}
+			++it; // Only increment if not erased
+		}
+
+		checkProcessesToBeRemovedFromRunning(); // Check for finished processes
 
 		// This is for Round Robin scheduling only
 		for (int i = 0; i < numberOfCores; i++) {
@@ -242,7 +262,7 @@ void Scheduler::rr()
 		}
 
 		batchCycles++;
-		if (batchCycles >= batchProcessFreq)
+		if (batchCycles >= batchProcessFreq && totalProcesses < 10)
 		{
 			if (generate.load())
 			{
@@ -280,8 +300,8 @@ void Scheduler::printProcessesStatus(std::ostream& out)
 
 	out << "Running processes:\n";
 	for (const auto& process : runningProcesses) {
-		int currentInstruction = process->getCurrentLine();
-		int totalInstructions = process->getTotalLines();
+		uint64_t currentInstruction = process->getCurrentLine();
+		uint64_t totalInstructions = process->getTotalLines();
 		int CPUCoreID = process->getCPUCoreID();
 		std::string processName = process->getName();
 		time_t createdTime = process->getCreatedTime();
@@ -297,8 +317,8 @@ void Scheduler::printProcessesStatus(std::ostream& out)
 
 	out << "\nFinished processes:\n";
 	for (const auto& process : finishedProcesses) {
-		int currentInstruction = process->getCurrentLine();
-		int totalInstructions = process->getTotalLines();
+		uint64_t currentInstruction = process->getCurrentLine();
+		uint64_t totalInstructions = process->getTotalLines();
 		std::string processName = process->getName();
 		time_t createdTime = process->getCreatedTime();
 

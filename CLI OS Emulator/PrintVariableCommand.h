@@ -4,13 +4,13 @@
 
 using namespace std;
 
-class PrintCommand : public ICommand
+class PrintVariableCommand : public ICommand
 {
 	public:
-		PrintCommand(int pid, string toPrint, Process* process);
+		PrintVariableCommand(int pid, string varName, Process* process);
 		void execute() override;
 		void logExecute(int cpuCoreID, string fileName) override;
 	private:
-		string toPrint;
+		string varName;
 };
 

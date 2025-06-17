@@ -38,11 +38,19 @@ void CPUCoreWorker::run()
 			{
 				
 				this->currentProcess->executeCurrentCommand(); // Execute the current command of the process
-				this->currentProcess->moveToNextLine(); // Move to the next instruction line
-				if (this->currentProcess->isFinished())
+				if (this->currentProcess->getProcessState() == Process::WAITING)
 				{
-					this->currentProcess->setProcessState(Process::FINISHED); // Set the process state to finished
-					stop();
+					 stop(); // Stop the core worker
+				}
+				else
+				{
+
+					this->currentProcess->moveToNextLine(); // Move to the next instruction line
+					if (this->currentProcess->isFinished())
+					{
+						this->currentProcess->setProcessState(Process::FINISHED); // Set the process state to finished
+						stop();
+					}
 				}
 				currentCycle = 0;
 			}

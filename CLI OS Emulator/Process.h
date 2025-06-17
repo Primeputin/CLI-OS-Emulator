@@ -59,7 +59,7 @@ public:
 		unordered_map<string, uint16_t> symbolTable;
 		mutable std::mutex mtx; // Mutex for thread safety when accessing process state and commands
 		mutable std::mutex varAccess; // Mutex for symbol table access
-		
+		void generateCommands();
 	
 };
 

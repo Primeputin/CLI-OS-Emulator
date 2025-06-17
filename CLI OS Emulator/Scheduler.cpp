@@ -194,7 +194,7 @@ void Scheduler::fcfs()
 		}
 
 		batchCycles++;
-		if (batchCycles >= batchProcessFreq && totalProcesses < 10)
+		if (batchCycles >= batchProcessFreq && totalProcesses < 10) // remove the totalProcesses condition if you want to generate more
 		{
 			if (generate.load())
 			{
@@ -262,7 +262,7 @@ void Scheduler::rr()
 		}
 
 		batchCycles++;
-		if (batchCycles >= batchProcessFreq && totalProcesses < 10)
+		if (batchCycles >= batchProcessFreq && totalProcesses < 10) // remove the totalProcesses condition if you want to generate more
 		{
 			if (generate.load())
 			{

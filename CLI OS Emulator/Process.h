@@ -6,7 +6,7 @@
 #include "ICommand.h"
 #include <vector>
 #include <memory>
-#include <mutex>	
+#include <mutex>
 
 using namespace std;
 
@@ -46,20 +46,23 @@ public:
 	time_t getCreatedTime() const;
 	int getCPUCoreID();
 
-	private:
-		int pid = -1; 
-		string name;
-		uint64_t currentLine;
-		uint64_t totalLines;
-		time_t createdTime;
-		int cpuCoreID = -1; // -1 means not assigned to any CPU core
-		typedef std::vector<std::shared_ptr<ICommand>> CommandList;
-		CommandList commandList; // List of commands to be executed by the process
-		ProcessState processState = READY; 
-		unordered_map<string, uint16_t> symbolTable;
-		mutable std::mutex mtx; // Mutex for thread safety when accessing process state and commands
-		mutable std::mutex varAccess; // Mutex for symbol table access
-		void generateCommands();
-	
-};
+	void addLog(const std::string& logEntry);
+	std::vector<std::string> getLogs() const;
 
+private:
+	int pid = -1;
+	string name;
+	uint64_t currentLine;
+	uint64_t totalLines;
+	time_t createdTime;
+	int cpuCoreID = -1; // -1 means not assigned to any CPU core
+	typedef std::vector<std::shared_ptr<ICommand>> CommandList;
+	CommandList commandList; // List of commands to be executed by the process
+	ProcessState processState = READY;
+	unordered_map<string, uint16_t> symbolTable;
+	mutable std::mutex mtx; // Mutex for thread safety when accessing process state and commands
+	mutable std::mutex varAccess; // Mutex for symbol table access
+	void generateCommands();
+	std::vector<std::string> logs;
+	mutable std::mutex logMutex;
+};

@@ -1,34 +1,28 @@
 #include "PrintCommand.h"
 #include <iostream>
-#include <fstream>
+#include <sstream>
 #include <iomanip>
 #include <ctime>
+#include "Process.h" 
 
-PrintCommand::PrintCommand(int pid, string toPrint, Process* process)
-	: ICommand(pid, ICommand::PRINT), toPrint(toPrint)
-{
-	this->process = process;
+PrintCommand::PrintCommand(int pid, std::string toPrint, Process* process)
+    : ICommand(pid, ICommand::PRINT), toPrint(toPrint) {
+    this->process = process;
 }
 
-void PrintCommand::execute()
-{
-	cout << this->toPrint << endl;
+void PrintCommand::execute() {
+    std::cout << this->toPrint << std::endl;
 }
 
-void PrintCommand::logExecute(int cpuCoreID, string fileName)
-{
-	ofstream outFile("output/" + fileName + ".txt", ios::app); // Create and open a file for writing
+void PrintCommand::logExecute(int cpuCoreID, std::string fileName) {
+    time_t now = time(0);
+    tm localTime;
+    localtime_s(&localTime, &now);
 
-	if (outFile.is_open()) {
-		time_t now = time(0);
-		tm localTime;
-		localtime_s(&localTime, &now);
-		outFile << "(" << put_time(&localTime, "%m/%d/%Y %I:%M:%S%p") << ")"
-			<< setw(6) << "Core:" << setw(2) << cpuCoreID << "  " << this->toPrint << endl;
+    std::ostringstream oss;
+    oss << "(" << std::put_time(&localTime, "%m/%d/%Y %I:%M:%S%p") << ")"
+        << " Core:" << std::setw(2) << cpuCoreID
+        << "  \"" << this->toPrint << "\"";
 
-		outFile.close();
-	}
-	else {
-		cout << "Unable to open file for writing." << endl;
-	}
+    process->addLog(oss.str());
 }

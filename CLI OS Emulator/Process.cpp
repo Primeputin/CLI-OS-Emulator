@@ -23,15 +23,6 @@ Process::Process(int pid, string name, uint64_t totalLines)
 
 	generateCommands();
 
-	ofstream outFile("output/" + name + ".txt"); // Create and open a file for writing
-
-	if (outFile.is_open()) {
-		outFile << "Process Name: " << this->name << endl;
-		outFile << "Logs: " << endl;
-	}
-	else {
-		cout << "Unable to open file for writing." << endl;
-	}
 }
 
 int Process::getPID() const
@@ -143,7 +134,15 @@ int Process::getCPUCoreID()
 {
 	return cpuCoreID;
 }
+void Process::addLog(const std::string& logEntry) {
+	std::lock_guard<std::mutex> lock(logMutex);
+	logs.push_back(logEntry);
+}
 
+std::vector<std::string> Process::getLogs() const {
+	std::lock_guard<std::mutex> lock(logMutex);
+	return logs;
+}
 void Process::generateCommands() {
 	uint64_t numberOfVariables = 0;
 	bool isResultDeclared = false;

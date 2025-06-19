@@ -45,6 +45,7 @@ public:
 	uint64_t getTotalLines() const;
 	time_t getCreatedTime() const;
 	int getCPUCoreID();
+	void clearSymbolTable();
 
 	void addLog(const std::string& logEntry);
 	std::vector<std::string> getLogs() const;

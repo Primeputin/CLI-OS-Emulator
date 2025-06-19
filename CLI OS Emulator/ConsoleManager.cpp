@@ -64,6 +64,10 @@ void ConsoleManager::createProcess(string name)
 	}
 }
 
+void ConsoleManager::destroyProcess(string name) {
+	this->consoleTable.erase(name);
+}
+
 void ConsoleManager::switchToMain()
 {
 	Console::clear();

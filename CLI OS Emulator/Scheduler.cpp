@@ -79,6 +79,9 @@ void Scheduler::checkProcessesToBeRemovedFromRunning()
 
 	for (auto it = runningProcesses.begin(); it != runningProcesses.end(); ) {
 		if ((*it)->getProcessState() == Process::FINISHED) {
+
+			(*it)->clearSymbolTable();
+			ConsoleManager::getInstance()->destroyProcess((*it)->getName());
 			// cout << "Process " << (*it)->getName() << " finished on core " << (*it)->getCPUCoreID() << " CPU tick:" << totalCycles.load() << endl;
 			finishedProcesses.push_back(*it);
 			it = runningProcesses.erase(it);

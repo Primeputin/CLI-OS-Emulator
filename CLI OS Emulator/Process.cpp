@@ -143,6 +143,11 @@ std::vector<std::string> Process::getLogs() const {
 	std::lock_guard<std::mutex> lock(logMutex);
 	return logs;
 }
+
+void Process::clearSymbolTable() {
+	symbolTable.clear();
+}
+
 void Process::generateCommands() {
 	uint64_t numberOfVariables = 0;
 	bool isResultDeclared = false;

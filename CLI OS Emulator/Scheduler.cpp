@@ -82,6 +82,8 @@ void Scheduler::checkProcessesToBeRemovedFromRunning()
 			// cout << "Process " << (*it)->getName() << " finished on core " << (*it)->getCPUCoreID() << " CPU tick:" << totalCycles.load() << endl;
 			finishedProcesses.push_back(*it);
 			it = runningProcesses.erase(it);
+			string processName = (*it)->getName();
+			ConsoleManager::getInstance()->removeProcess(processName); // Remove the process console from the console manager
 		}
 		else if ((*it)->getProcessState() == Process::WAITING) {
 			// cout << "Process " << (*it)->getName() << " is waiting on core " << (*it)->getCPUCoreID() << " CPU tick:" << totalCycles.load() << endl;

@@ -228,5 +228,12 @@ void ConsoleManager::stopGenerationOfProcesses()
 	this->scheduler->stopGenerationOfProcesses();
 }
 
+void ConsoleManager::removeProcess(string name)
+{
+	if (consoleExists(name)) {
+		consoleTable.erase(name); // Remove the console from the table
+	}
+}
+
 
 

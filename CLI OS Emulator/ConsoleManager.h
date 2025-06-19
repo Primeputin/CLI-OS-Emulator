@@ -43,5 +43,6 @@ class ConsoleManager
 		bool isSchedulerInitialized();
 		void generateProcesses();
 		void stopGenerationOfProcesses();
+		void removeProcess(string name);
 };
 

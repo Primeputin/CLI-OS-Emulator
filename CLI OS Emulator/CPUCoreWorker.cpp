@@ -77,6 +77,7 @@ int CPUCoreWorker::getCoreID() const
 
 bool CPUCoreWorker::isRunning() const
 {
+	lock_guard<mutex> lock(mtx);
 	return this->running.load();
 }
 

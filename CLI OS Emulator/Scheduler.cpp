@@ -197,7 +197,7 @@ void Scheduler::fcfs()
 		}
 
 		batchCycles++;
-		if (batchCycles >= batchProcessFreq && totalProcesses < 10) // remove the totalProcesses condition if you want to generate more
+		if (batchCycles >= batchProcessFreq) // remove the totalProcesses condition if you want to generate more
 		{
 			if (generate.load())
 			{
@@ -265,7 +265,7 @@ void Scheduler::rr()
 		}
 
 		batchCycles++;
-		if (batchCycles >= batchProcessFreq && totalProcesses < 10) // remove the totalProcesses condition if you want to generate more
+		if (batchCycles >= batchProcessFreq) // remove the totalProcesses condition if you want to generate more
 		{
 			if (generate.load())
 			{
@@ -285,21 +285,14 @@ void Scheduler::rr()
 
 void Scheduler::printProcessesStatus(std::ostream& out)
 {
-	int runningCores = 0;
-
-	for (int i = 0; i < numberOfCores; i++) {
-		if (cores[i]->isRunning()) {
-			runningCores++;
-		}
-	}
-
+	
+	std::lock_guard<std::mutex> rLock(runningMutex);
+	std::lock_guard<std::mutex> fLock(finishedMutex);
+	int runningCores = runningProcesses.size();
 	out << "CPU Utilization: " << (runningCores * 100) / numberOfCores << "%\n";
 	out << "Cores used: " << runningCores << "\n";
 	out << "Cores available: " << numberOfCores - runningCores << "\n\n";
 	out << "--------------------------\n";
-
-	std::lock_guard<std::mutex> rLock(runningMutex);
-	std::lock_guard<std::mutex> fLock(finishedMutex);
 
 	out << "Running processes:\n";
 	for (const auto& process : runningProcesses) {

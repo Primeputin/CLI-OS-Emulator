@@ -22,11 +22,6 @@ void ProcessConsole::processCommand(string command)
 	vector<string> texts = getSpacedTexts(command);
 	if (command == "exit")
 	{
-		if (this->process->isFinished()) {
-			this->process->clearSymbolTable();
-			ConsoleManager::getInstance()->destroyProcess(this->process->getName());
-		}
-
 		Console::clear();
 		ConsoleManager::getInstance()->switchToMain();
 	}

@@ -45,6 +45,7 @@ public:
 	uint64_t getTotalLines() const;
 	time_t getCreatedTime() const;
 	int getCPUCoreID();
+	void clearSymbolTable();
 
 	private:
 		int pid = -1; 

@@ -1,39 +1,33 @@
 #include "PrintVariableCommand.h"
+#include "Process.h" 
 #include <iostream>
-#include <fstream>
+#include <sstream>
 #include <iomanip>
 #include <ctime>
-#include "Process.h"
 
-PrintVariableCommand::PrintVariableCommand(int pid, string varName, Process* process)
-	: ICommand(pid, ICommand::PRINT), varName(varName)
-{
-	this->process = process;
+PrintVariableCommand::PrintVariableCommand(int pid, std::string varName, Process* process)
+    : ICommand(pid, ICommand::PRINT), varName(varName) {
+    this->process = process;
 }
 
-void PrintVariableCommand::execute()
-{
-	uint16_t value;
-	process->getVariableValue(this->varName, value);
-	cout << value << " from: " << this->varName << endl;
+void PrintVariableCommand::execute() {
+    uint16_t value;
+    process->getVariableValue(varName, value);
+    std::cout << value << " from: " << varName << std::endl;
 }
 
-void PrintVariableCommand::logExecute(int cpuCoreID, string fileName)
-{
-	uint16_t value;
-	process->getVariableValue(this->varName, value);
-	ofstream outFile("output/" + fileName + ".txt", ios::app); // Create and open a file for writing
+void PrintVariableCommand::logExecute(int cpuCoreID, std::string fileName) {
+    uint16_t value;
+    process->getVariableValue(this->varName, value);
 
-	if (outFile.is_open()) {
-		time_t now = time(0);
-		tm localTime;
-		localtime_s(&localTime, &now);
-		outFile << "(" << put_time(&localTime, "%m/%d/%Y %I:%M:%S%p") << ")"
-			<< setw(6) << "Core:" << setw(2) << cpuCoreID << "  " << value << " from: " << this->varName << endl;
+    time_t now = time(0);
+    tm localTime;
+    localtime_s(&localTime, &now);
 
-		outFile.close();
-	}
-	else {
-		cout << "Unable to open file for writing." << endl;
-	}
+    std::ostringstream oss;
+    oss << "(" << std::put_time(&localTime, "%m/%d/%Y %I:%M:%S%p") << ")"
+        << " Core:" << std::setw(2) << cpuCoreID
+        << "  " << value << " from: " << this->varName;
+
+    process->addLog(oss.str());
 }

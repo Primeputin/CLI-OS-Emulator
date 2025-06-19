@@ -4,8 +4,8 @@ CLI OS Emulator has schedulers to simulate running processes. The main entry cla
 
 ## Developers
 
-- Laolao, Gian Chill [@LarsBasura](https://github.com/https://github.com/LarsBasura)
-- Lim, Andrei Zachary [@Nidokohi](https://github.com/Nidokohi)
+- Laolao, Gian Chill [@Nidokohi](https://github.com/Nidokohi)
+- Lim, Andrei Zachary [@LarsBasura](https://github.com/https://github.com/LarsBasura)
 - Hokia, Pierce Zachary [@nimbus7462](https://github.com/nimbus7462)
 - Tang, Vladimir Casey [@Primeputin](https://github.com/Primeputin)
 

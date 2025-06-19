@@ -144,6 +144,10 @@ int Process::getCPUCoreID()
 	return cpuCoreID;
 }
 
+void Process::clearSymbolTable() {
+	symbolTable.clear();
+}
+
 void Process::generateCommands() {
 	uint64_t numberOfVariables = 0;
 	bool isResultDeclared = false;

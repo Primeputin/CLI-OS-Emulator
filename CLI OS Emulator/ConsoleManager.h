@@ -28,6 +28,7 @@ class ConsoleManager
 		static void initialize();
 		static void destroy();
 		void createProcess(string name);
+		void destroyProcess(string name);
 		void switchToMain();
 		void switchToProcessConsole(string name);
 		void addToConsoleTable(string name, shared_ptr<Console> console);

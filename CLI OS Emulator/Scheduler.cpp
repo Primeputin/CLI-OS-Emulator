@@ -189,13 +189,13 @@ void Scheduler::fcfs()
 		}
  
 		// Tell all cpu core workers to start running an instruction line
-		for (int i = 0; i < startSem.size(); i++) {
+		/*for (int i = 0; i < startSem.size(); i++) {
 			startSem[i]->release();
 		}
 		for (int i = 0; i < endSem.size(); i++) {
 			endSem[i]->acquire();
-		}
-
+		}*/
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		batchCycles++;
 		if (batchCycles >= batchProcessFreq) // remove the totalProcesses condition if you want to generate more
 		{
@@ -257,13 +257,13 @@ void Scheduler::rr()
 		}
 
 		// Tell all cpu core workers to start running an instruction line
-		for (int i = 0; i < startSem.size(); i++) {
+		/*for (int i = 0; i < startSem.size(); i++) {
 			startSem[i]->release();
 		}
 		for (int i = 0; i < endSem.size(); i++) {
 			endSem[i]->acquire();
-		}
-
+		}*/
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		batchCycles++;
 		if (batchCycles >= batchProcessFreq) // remove the totalProcesses condition if you want to generate more
 		{
@@ -278,7 +278,6 @@ void Scheduler::rr()
 			}
 			batchCycles = 0; // Reset batch cycles after adding a new process
 		}
-
 		totalCycles++;
 	}
 }

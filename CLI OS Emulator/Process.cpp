@@ -156,7 +156,7 @@ void Process::generateCommands() {
 
 	// Helper lambda that contains the original randomization logic for basic commands
 	auto generateSingleCommand = [&]() -> shared_ptr<ICommand> {
-		int randomizedCommand = rand() % 6; // Randomly choose a command type
+		int randomizedCommand = rand() % 4; // Randomly choose a command type
 
 		switch (randomizedCommand)
 		{
@@ -173,45 +173,7 @@ void Process::generateCommands() {
 				return make_shared<PrintCommand>(pid, "Hello world from " + name + "!", this);
 				break;
 			}
-			case 2: // Print command for variable value
-			{
-				int numberOfVariations = 1;
-				if (isResultDeclared) // If result variable is declared, print it
-				{
-					numberOfVariations = 2;
-				}
-
-				if (numberOfVariables > 0)
-				{
-					int randomizedType = rand() % numberOfVariations; // Randomly choose a type of print variable command
-
-					if (randomizedType == 0)
-					{
-						int randomizedVariables = rand() % numberOfVariables; // Randomly choose a variable to print
-						string varName = "var_" + to_string(randomizedVariables);
-						return make_shared<PrintVariableCommand>(pid, varName, this);
-					}
-					else
-					{
-						return make_shared<PrintVariableCommand>(pid, "result_var", this); // Print the result variable
-					}
-				}
-				else
-				{
-					int randomizedType = rand() % numberOfVariations; // Randomly choose a type of print variable command
-					if (randomizedType == 0)
-					{
-						return make_shared<PrintCommand>(pid, "Hello world from " + name + "!", this);
-					}
-					else
-					{
-						return make_shared<PrintVariableCommand>(pid, "result_var", this); // Print the result variable
-					}
-
-				}
-				break;
-			}
-			case 3:
+			case 2:
 			{
 				int numberOfVariations = 4;
 				if (numberOfVariables == 0) // If no variables declared, skip to next iteration
@@ -252,7 +214,7 @@ void Process::generateCommands() {
 				break;
 
 			}
-			case 4:
+			case 3:
 			{
 				int numberOfVariations = 4;
 				if (numberOfVariables == 0) // If no variables declared, skip to next iteration
@@ -292,9 +254,47 @@ void Process::generateCommands() {
 				}
 				break;
 			}
-			case 5: // Sleep command
+			case 4: // Sleep command
 			{
 				return make_shared<SleepCommand>(pid, rand() % 256, this);
+				break;
+			}
+			case 5: // Print command for variable value
+			{
+				int numberOfVariations = 1;
+				if (isResultDeclared) // If result variable is declared, print it
+				{
+					numberOfVariations = 2;
+				}
+
+				if (numberOfVariables > 0)
+				{
+					int randomizedType = rand() % numberOfVariations; // Randomly choose a type of print variable command
+
+					if (randomizedType == 0)
+					{
+						int randomizedVariables = rand() % numberOfVariables; // Randomly choose a variable to print
+						string varName = "var_" + to_string(randomizedVariables);
+						return make_shared<PrintVariableCommand>(pid, varName, this);
+					}
+					else
+					{
+						return make_shared<PrintVariableCommand>(pid, "result_var", this); // Print the result variable
+					}
+				}
+				else
+				{
+					int randomizedType = rand() % numberOfVariations; // Randomly choose a type of print variable command
+					if (randomizedType == 0)
+					{
+						return make_shared<PrintCommand>(pid, "Hello world from " + name + "!", this);
+					}
+					else
+					{
+						return make_shared<PrintVariableCommand>(pid, "result_var", this); // Print the result variable
+					}
+
+				}
 				break;
 			}
 			default:

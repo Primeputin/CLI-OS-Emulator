@@ -86,11 +86,6 @@ void Scheduler::checkProcessesToBeRemovedFromRunning()
 			finishedProcesses.push_back(*it);
 			it = runningProcesses.erase(it);
 		}
-		else if ((*it)->getProcessState() == Process::WAITING) {
-			// cout << "Process " << (*it)->getName() << " is waiting on core " << (*it)->getCPUCoreID() << " CPU tick:" << totalCycles.load() << endl;
-			waitingProcesses.push_back(*it);
-			it = runningProcesses.erase(it);
-		}
 		else {
 			++it;
 		}
@@ -164,22 +159,6 @@ void Scheduler::fcfs()
 	uint32_t batchCycles = 0;
 	while (this->running.load())
 	{
-		for (auto it = waitingProcesses.begin(); it != waitingProcesses.end(); ) {
-			if ((*it)->getProcessState() == Process::WAITING) {
-				(*it)->decrementSleepTick();
-				if (!(*it)->isSleeping()) {
-					// cout << "Process " << (*it)->getName() << " is ready to run again on CPU tick: " << totalCycles.load() << endl;
-					(*it)->setProcessState(Process::READY);
-					(*it)->moveToNextLine(); // Move to the next instruction line
-					addProcessToReadyQueue(*it); // Move to ready queue
-
-					it = waitingProcesses.erase(it); // Remove and move to next
-					continue;
-				}
-			}
-			++it; // Only increment if not erased
-		}
-
 		checkProcessesToBeRemovedFromRunning(); // Check for finished processes
 
 		for (int i = 0; i < numberOfCores; i++) {
@@ -220,22 +199,6 @@ void Scheduler::rr()
 	uint32_t batchCycles = 0;
 	while (this->running.load())
 	{
-		for (auto it = waitingProcesses.begin(); it != waitingProcesses.end(); ) {
-			if ((*it)->getProcessState() == Process::WAITING) {
-				(*it)->decrementSleepTick();
-				if (!(*it)->isSleeping()) {
-					// cout << "Process " << (*it)->getName() << " is ready to run again on CPU tick: " << totalCycles.load() << endl;
-					(*it)->setProcessState(Process::READY);
-					(*it)->moveToNextLine(); // Move to the next instruction line
-					addProcessToReadyQueue(*it); // Move to ready queue
-
-					it = waitingProcesses.erase(it); // Remove and move to next
-					continue;
-				}
-			}
-			++it; // Only increment if not erased
-		}
-
 		checkProcessesToBeRemovedFromRunning(); // Check for finished processes
 
 		// This is for Round Robin scheduling only

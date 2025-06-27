@@ -8,8 +8,7 @@ SleepCommand::SleepCommand(int pid, uint8_t ticks, Process* process)
 void SleepCommand::execute()
 {
 	if (process != nullptr) {
-	    setSleepTicks(ticks);
-		this->process->setProcessState(Process::WAITING); // Yield CPU
+		decrementSleepTick();
 	}
 }
 

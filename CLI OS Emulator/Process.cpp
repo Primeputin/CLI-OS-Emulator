@@ -22,7 +22,20 @@ Process::Process(int pid, string name, uint64_t totalLines)
 	this->createdTime = time(nullptr);
 
 	generateCommands();
-
+	// Example commands for testing purposes
+	/*symbolTable["x"] = 0;
+	symbolTable["y"] = 0;
+	symbolTable["y"] = 0;
+	for (int i = 0; i < 100; i++)
+	{
+		this->addCommand(make_shared<AddCommand>(pid, "x", "x", "1", this));
+		this->addCommand(make_shared<PrintVariableCommand>(pid, "x", this));
+		this->addCommand(make_shared<AddCommand>(pid, "y", "y", "1", this));
+		this->addCommand(make_shared<PrintVariableCommand>(pid, "y", this));
+		this->addCommand(make_shared<AddCommand>(pid, "z", "z", "1", this));
+		this->addCommand(make_shared<PrintVariableCommand>(pid, "z", this));
+	}*/
+	
 }
 
 int Process::getPID() const
@@ -92,23 +105,12 @@ bool Process::getVariableValue(const std::string& varName, uint16_t& outValue) c
 	return false;
 }
 
-void Process::decrementSleepTick()
-{
-	if (this->processState == Process::WAITING) {
-		auto cmd = std::dynamic_pointer_cast<SleepCommand>(commandList[getCurrentLine()]);
-		if (cmd != nullptr) {
-			cmd->decrementSleepTick();
-		}
-	}
-
-}
-
 bool Process::isSleeping() const
 {
-	if (this->processState == Process::WAITING) {
-		auto cmd = std::dynamic_pointer_cast<SleepCommand>(commandList[getCurrentLine()]);
-		if (cmd != nullptr) {
-			return cmd->isSleeping();
+	if (!commandList.empty() && getCurrentLine() < commandList.size()) {
+		auto sleepCommand = dynamic_cast<SleepCommand*>(commandList[getCurrentLine()].get());
+		if (sleepCommand) {
+			return sleepCommand->isSleeping();
 		}
 	}
 	return false;
@@ -156,7 +158,7 @@ void Process::generateCommands() {
 
 	// Helper lambda that contains the original randomization logic for basic commands
 	auto generateSingleCommand = [&]() -> shared_ptr<ICommand> {
-		int randomizedCommand = rand() % 4; // Randomly choose a command type
+		int randomizedCommand = rand() % 5; // Randomly choose a command type
 
 		switch (randomizedCommand)
 		{

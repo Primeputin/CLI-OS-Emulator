@@ -18,7 +18,6 @@ public:
 	{
 		READY,
 		RUNNING,
-		WAITING,
 		FINISHED
 	};
 
@@ -37,7 +36,6 @@ public:
 
 	void declareVariable(const std::string& varName, uint16_t value);
 	bool getVariableValue(const std::string& varName, uint16_t& outValue) const;
-	void decrementSleepTick();
 	bool isSleeping() const;
 
 	string getName() const;

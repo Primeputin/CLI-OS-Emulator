@@ -38,13 +38,8 @@ void CPUCoreWorker::run()
 			{
 				
 				this->currentProcess->executeCurrentCommand(); // Execute the current command of the process
-				if (this->currentProcess->getProcessState() == Process::WAITING)
+				if (!this->currentProcess->isSleeping())
 				{
-					 stop(); // Stop the core worker
-				}
-				else
-				{
-
 					this->currentProcess->moveToNextLine(); // Move to the next instruction line
 					if (this->currentProcess->isFinished())
 					{

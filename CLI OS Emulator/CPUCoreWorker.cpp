@@ -7,7 +7,7 @@ CPUCoreWorker::CPUCoreWorker(int coreID, uint64_t quantumCycles, uint64_t batchP
 	minIns(minIns), maxIns(maxIns), delayPerExecution(delayPerExecution), startSem(startSem), endSem(endSem), running(false)
 {
 	this->currentQuantumCycles.store(this->quantumCycles);
-	thread(&CPUCoreWorker::run, this).detach(); // thread for running the process
+	coreThread = thread(&CPUCoreWorker::run, this); // thread for running the process
 
 }
 
@@ -28,7 +28,7 @@ void CPUCoreWorker::doProcess(std::shared_ptr<class Process> process)
 
 void CPUCoreWorker::run()
 {
-	while (true)
+	while (coreThreadRunning.load())
 	{
 		//startSem->acquire(); // Wait for the signal to start running
 		currentCycle++; // Increment the cycle count for this core
@@ -75,6 +75,14 @@ bool CPUCoreWorker::isRunning() const
 {
 	lock_guard<mutex> lock(mtx);
 	return this->running.load();
+}
+
+void CPUCoreWorker::stopCoreThread()
+{
+	this->coreThreadRunning.store(false);
+	if (this->coreThread.joinable()) {
+		this->coreThread.join(); 
+	}
 }
 
 shared_ptr<class Process> CPUCoreWorker::getCurrentProcess() const

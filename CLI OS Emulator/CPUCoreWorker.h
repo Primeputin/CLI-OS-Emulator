@@ -18,6 +18,7 @@ class CPUCoreWorker
 
 		int getCoreID() const;
 		bool isRunning() const;
+		void stopCoreThread();
 		shared_ptr<class Process> getCurrentProcess() const;
 		bool shouldInterrupt() const;
 		void setProcessBackToReadyState();
@@ -32,11 +33,12 @@ class CPUCoreWorker
 		atomic<uint64_t> currentCycle;
 		atomic<uint64_t> currentQuantumCycles;
 		shared_ptr<class Process> currentProcess; // process being processed
-		// bool running = false;
-		atomic<bool> running = false;
+		atomic<bool> running = false; // boolean for saying it's idle or not
 		mutable mutex mtx;
 		shared_ptr<binary_semaphore> startSem;
 		shared_ptr<binary_semaphore> endSem;
+		thread coreThread;
+		atomic<bool> coreThreadRunning = true; // boolean for actually shutting or running the cpu
 
 
 };

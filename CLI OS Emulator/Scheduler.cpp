@@ -149,6 +149,9 @@ void Scheduler::run()
 void Scheduler::stop()
 {
 	this->running.store(false);
+	for (int i = 0; i < numberOfCores; i++) {
+		cores[i]->stopCoreThread(); // Stop the core worker thread
+	}
 	if (this->schedulerThread.joinable()) {
 		this->schedulerThread.join(); // wait for the thread to finish
 	}
@@ -174,7 +177,7 @@ void Scheduler::fcfs()
 		for (int i = 0; i < endSem.size(); i++) {
 			endSem[i]->acquire();
 		}*/
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		std::this_thread::sleep_for(std::chrono::milliseconds(475));
 		batchCycles++;
 		if (batchCycles >= batchProcessFreq) // remove the totalProcesses condition if you want to generate more
 		{
@@ -226,7 +229,7 @@ void Scheduler::rr()
 		for (int i = 0; i < endSem.size(); i++) {
 			endSem[i]->acquire();
 		}*/
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		std::this_thread::sleep_for(std::chrono::milliseconds(475));
 		batchCycles++;
 		if (batchCycles >= batchProcessFreq) // remove the totalProcesses condition if you want to generate more
 		{

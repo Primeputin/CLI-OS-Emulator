@@ -35,7 +35,6 @@ Process::Process(int pid, string name, uint64_t totalLines)
 		this->addCommand(make_shared<AddCommand>(pid, "z", "z", "1", this));
 		this->addCommand(make_shared<PrintVariableCommand>(pid, "z", this));
 	}*/
-	
 }
 
 int Process::getPID() const
@@ -158,6 +157,7 @@ void Process::generateCommands() {
 
 	// Helper lambda that contains the original randomization logic for basic commands
 	auto generateSingleCommand = [&]() -> shared_ptr<ICommand> {
+		// NOTE: BY DEFAULT, PRINT VARIABLE IS NOT INCLUDED IN THE RANDOMIZATION
 		int randomizedCommand = rand() % 5; // Randomly choose a command type
 
 		switch (randomizedCommand)

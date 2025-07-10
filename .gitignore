@@ -361,6 +361,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/CLI OS Emulator/memory_logs
+/CLI OS Emulator/csopesy-backing-store.txt
 /CLI OS Emulator/output
 /CLI OS Emulator/config.txt
 /CLI OS Emulator/csopesy-log.txt

@@ -21,7 +21,7 @@ public:
 		FINISHED
 	};
 
-	Process(int pid, string name, uint64_t totalLines);
+	Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrameSize, uint32_t minMemorySize, uint32_t maxMemorySize);
 
 	int getPID() const;
 	bool isFinished() const;
@@ -48,6 +48,13 @@ public:
 	void addLog(const std::string& logEntry);
 	std::vector<std::string> getLogs() const;
 
+	uint32_t getMemorySize();
+	uint32_t getMinMemorySize();
+	uint32_t getMaxMemorySize();
+	uint32_t getMemoryFrameSize();
+	uint32_t getNPages();
+	void setRandomizedMemSize(uint32_t minMemorySize, uint32_t maxMemorySize);
+
 private:
 	int pid = -1;
 	string name;
@@ -64,4 +71,10 @@ private:
 	void generateCommands();
 	std::vector<std::string> logs;
 	mutable std::mutex logMutex;
+	uint32_t memorySize;
+	uint32_t minMemorySize;
+	uint32_t maxMemorySize;
+	uint32_t memoryFrameSize;
+	uint32_t nPages;
+	time_t startOrEndTime;
 };

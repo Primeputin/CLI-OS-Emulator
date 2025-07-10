@@ -5,6 +5,9 @@
 #include <ctime>
 #include <iostream>
 #include <functional>
+#include <vector>
+#include <cmath>
+#include <random>
 #include "PrintCommand.h"
 #include "PrintVariableCommand.h"
 #include "DeclareCommand.h"
@@ -13,7 +16,7 @@
 #include "SleepCommand.h"
 
 
-Process::Process(int pid, string name, uint64_t totalLines)
+Process::Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrameSize, uint32_t minMemorySize, uint32_t maxMemorySize)
 {
 	this->pid = pid;
 	this->name = name;
@@ -21,6 +24,8 @@ Process::Process(int pid, string name, uint64_t totalLines)
 	this->totalLines = totalLines;
 	this->createdTime = time(nullptr);
 
+	nPages = memorySize / memoryFrameSize;
+	setRandomizedMemSize(minMemorySize, maxMemorySize);
 	generateCommands();
 	// Example commands for testing purposes
 	/*symbolTable["x"] = 0;
@@ -34,6 +39,19 @@ Process::Process(int pid, string name, uint64_t totalLines)
 		this->addCommand(make_shared<PrintVariableCommand>(pid, "y", this));
 		this->addCommand(make_shared<AddCommand>(pid, "z", "z", "1", this));
 		this->addCommand(make_shared<PrintVariableCommand>(pid, "z", this));
+	}*/
+	/*symbolTable["x"] = 0;
+	for (int i = 0; i < totalLines; i++)
+	{
+		if (i % 2 == 0)
+		{
+			this->addCommand(make_shared<PrintVariableCommand>(pid, "x", this));
+		}
+		else
+		{
+			uint16_t value = 1 + (rand() % 10);
+			this->addCommand(make_shared<AddCommand>(pid, "x", "x", to_string(value), this));
+		}
 	}*/
 }
 
@@ -158,7 +176,7 @@ void Process::generateCommands() {
 	// Helper lambda that contains the original randomization logic for basic commands
 	auto generateSingleCommand = [&]() -> shared_ptr<ICommand> {
 		// NOTE: BY DEFAULT, PRINT VARIABLE IS NOT INCLUDED IN THE RANDOMIZATION
-		int randomizedCommand = rand() % 5; // Randomly choose a command type
+		int randomizedCommand = rand() % 4; // Randomly choose a command type
 
 		switch (randomizedCommand)
 		{
@@ -356,5 +374,53 @@ void Process::generateCommands() {
 	// Generate the entire command sequence
 	int tempCounter = 0;
 	commandList = generateCommandSequence(totalLines, 0, tempCounter);
+
+}
+
+uint32_t Process::getMemorySize()
+{
+	return memorySize;
+}
+
+uint32_t Process::getMinMemorySize()
+{
+	return minMemorySize;
+}
+
+uint32_t Process::getMaxMemorySize()
+{
+	return maxMemorySize;
+}
+
+uint32_t Process::getMemoryFrameSize()
+{
+	return memoryFrameSize;
+}
+
+uint32_t Process::getNPages()
+{
+	return nPages;
+}
+
+void Process::setRandomizedMemSize(uint32_t minMemorySize, uint32_t maxMemorySize)
+{
+	if (minMemorySize == maxMemorySize) {
+		this->memorySize = minMemorySize;
+		return;
+	}
+
+
+	// Build list of valid powers of 2 between min and max
+    vector<uint32_t> powersOfTwos;
+	for (uint32_t size = minMemorySize; size <= maxMemorySize; size <<= 1) {
+		powersOfTwos.push_back(size);
+	}
+
+	// Randomly select one from the list
+	random_device rd;
+	mt19937 gen(rd());
+	uniform_int_distribution<size_t> dist(0, powersOfTwos.size() - 1);
+
+	memorySize = powersOfTwos[dist(gen)];
 
 }

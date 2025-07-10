@@ -60,7 +60,7 @@ void ConsoleManager::createProcess(string name)
 	{
 
 		cout << "Screen name: " << name << " created successfully." << std::endl;
-		switchToProcessConsole(newConsole->getName());
+		//switchToProcessConsole(newConsole->getName());
 	}
 }
 
@@ -152,12 +152,16 @@ void ConsoleManager::readConfigFile()
 	uint64_t minIns = config["min-ins"].empty() ? 1 : std::stoull(config["min-ins"]);
 	uint64_t maxIns = config["max-ins"].empty() ? 1 : std::stoull(config["max-ins"]);
 	uint64_t delayPerExecution = config["delay-per-exec"].empty() ? 0 : std::stoull(config["delay-per-exec"]);
+	uint32_t maxOverallMemory = config["max-overall-mem"].empty() ? 1024 : std::stoul(config["max-overall-mem"]);
+	uint32_t memoryPerFrame = config["mem-per-frame"].empty() ? 64 : std::stoul(config["mem-per-frame"]);
+	uint32_t minMemoryPerProcess = config["min-mem-per-proc"].empty() ? 64 : std::stoul(config["min-mem-per-proc"]);
+	uint32_t maxMemoryPerProcess = config["min-mem-per-proc"].empty() ? 256 : std::stoul(config["max-mem-per-proc"]);
 
 	if (algorithm == "fcfs") {
-		scheduler = make_shared<Scheduler>(Scheduler::FCFS, numOfCore, quantumCycles, batchProcessFreq, minIns, maxIns, delayPerExecution);
+		scheduler = make_shared<Scheduler>(Scheduler::FCFS, numOfCore, quantumCycles, batchProcessFreq, minIns, maxIns, delayPerExecution, maxOverallMemory, memoryPerFrame, minMemoryPerProcess, maxMemoryPerProcess);
 	}
 	else if (algorithm == "rr") {
-		scheduler = make_shared<Scheduler>(Scheduler::RR, numOfCore, quantumCycles, batchProcessFreq, minIns, maxIns, delayPerExecution);
+		scheduler = make_shared<Scheduler>(Scheduler::RR, numOfCore, quantumCycles, batchProcessFreq, minIns, maxIns, delayPerExecution, maxOverallMemory, memoryPerFrame, minMemoryPerProcess, maxMemoryPerProcess);
 	}
 	else {
 		cerr << "Unknown scheduling algorithm: " << algorithm << endl;

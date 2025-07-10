@@ -30,7 +30,7 @@ void CPUCoreWorker::run()
 {
 	while (coreThreadRunning.load())
 	{
-		//startSem->acquire(); // Wait for the signal to start running
+		// startSem->acquire(); // Wait for the signal to start running
 		currentCycle++; // Increment the cycle count for this core
 		if (currentCycle.load() >= delayPerExecution + 1)
 		{
@@ -56,7 +56,7 @@ void CPUCoreWorker::run()
 			this->currentQuantumCycles--; // Decrement the quantum cycles for the process
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		//endSem->release(); // Signal that the core has finished processing
+		// endSem->release(); // Signal that the core has finished processing
 	}
 }
 

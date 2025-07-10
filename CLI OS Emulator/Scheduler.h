@@ -13,7 +13,7 @@
 #include "CPUCoreWorker.h"
 #include "Process.h"
 #include "constants.h"
-
+#include "FlatMemoryManager.h"
 
 using namespace std;
 
@@ -25,7 +25,7 @@ class Scheduler
 			FCFS, // First Come First Serve
 			RR,   // Round Robin
 		};
-		Scheduler(SchedulingAlgorithm algorithm, int numberOfCores, uint64_t quantumCycles, uint64_t batchProcessFreq, uint64_t minIns, uint64_t maxIns, uint64_t delaysPerExecution);
+		Scheduler(SchedulingAlgorithm algorithm, int numberOfCores, uint64_t quantumCycles, uint64_t batchProcessFreq, uint64_t minIns, uint64_t maxIns, uint64_t delaysPerExecution, uint32_t maxOverallMemory, uint32_t memoryPerFrame, uint32_t minMemoryPerProcess, uint32_t maxMemoryPerProcess);
 
 		void addProcessToReadyQueue(shared_ptr<class Process> process);
 		void removeProcessFromRunningQueue(shared_ptr<class Process> process);
@@ -49,6 +49,10 @@ class Scheduler
 		uint64_t minIns;
 		uint64_t maxIns;
 		uint64_t delayPerExecution;
+		uint32_t maxOverallMemory;
+		uint32_t memoryPerFrame;
+		uint32_t minMemoryPerProcess;
+		uint32_t maxMemoryPerProcess;
 		atomic <uint64_t> totalCycles = 0; // Total cycles executed by the scheduler
 		atomic <uint64_t> totalProcesses = 0; // Total processes created
 		atomic <uint64_t> latestProcessID = 0; // Total processes created
@@ -65,5 +69,6 @@ class Scheduler
 		vector<shared_ptr<Process>> waitingProcesses;
 		vector<shared_ptr<Process>> runningProcesses;
 		vector<shared_ptr<Process>> finishedProcesses;
+		unique_ptr<MemoryManager> memoryManager;
 };
 

@@ -14,7 +14,7 @@
 #include "Process.h"
 #include "constants.h"
 #include "FlatMemoryManager.h"
-
+#include "DemandPagingMemoryManager.h"
 using namespace std;
 
 class Scheduler
@@ -33,7 +33,7 @@ class Scheduler
 		void checkProcessesToBeRemovedFromRunning();
 		void generateProcesses();
 		void stopGenerationOfProcesses();
-		shared_ptr<Console> generateRandomProcess(string name);
+		shared_ptr<Console> generateRandomProcess(string name, bool randomizedMemorySize, uint16_t memorySize = 64);
 		void run();
 		void stop();
 		void fcfs();
@@ -69,6 +69,6 @@ class Scheduler
 		vector<shared_ptr<Process>> waitingProcesses;
 		vector<shared_ptr<Process>> runningProcesses;
 		vector<shared_ptr<Process>> finishedProcesses;
-		unique_ptr<MemoryManager> memoryManager;
+		unique_ptr<DemandPagingMemoryManager> memoryManager;
 };
 

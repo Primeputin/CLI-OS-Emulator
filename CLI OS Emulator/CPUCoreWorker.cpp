@@ -50,9 +50,8 @@ void CPUCoreWorker::run()
 				currentCycle = 0;
 			}
 		}
-		if (running.load())
+		if (running.load() && this->currentQuantumCycles.load() > 0)
 		{
-
 			this->currentQuantumCycles--; // Decrement the quantum cycles for the process
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -92,7 +91,7 @@ shared_ptr<class Process> CPUCoreWorker::getCurrentProcess() const
 
 bool CPUCoreWorker::shouldInterrupt() const
 {
-	if (this->running.load() && this->currentQuantumCycles.load() == 0) {
+	if (this->running.load() && this->currentQuantumCycles.load() <= 0) {
 		return true; // Interrupt if not running, quantum cycles are zero, or no current process
 	}
 	return false;

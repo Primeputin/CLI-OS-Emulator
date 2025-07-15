@@ -29,7 +29,7 @@ Scheduler::Scheduler(SchedulingAlgorithm algorithm, int numberOfCores, uint64_t 
 		cores.push_back(make_unique<CPUCoreWorker>(i, quantumCycles, batchProcessFreq, minIns, maxIns, delayPerExecution, newStartSem, newEndSem));
 	}
 	
-	this->memoryManager = std::make_unique<FlatMemoryManager>(maxOverallMemory);
+	this->memoryManager = std::make_unique<DemandPagingMemoryManager>(maxOverallMemory, memoryPerFrame, "csopesy-backing-store.txt.");
 	
 }
 
@@ -57,40 +57,17 @@ void Scheduler::assignProcessToCore(int coreID)
 		process = readyQueue.front();
 		readyQueue.pop();
 	}
-
-	if (!memoryManager->isProcessAllocated(process)) {
-		bool isAllocated = memoryManager->allocate(process);
-
-		if (isAllocated)
-		{
-			// Lock only while updating running processes
-			{
-				std::lock_guard<std::mutex> rLock(runningMutex);
-				this->memoryManager->visualizeMemory(totalCycles.load());
-				runningProcesses.push_back(process);
-				// cout << "Process " << process->getName() << " assigned to core " << coreID << " CPU tick:" << totalCycles.load() << endl;
-			}
-			cores[coreID]->doProcess(process);
-		}
-		else
-		{
-			// Lock only while accessing the queue
-			addProcessToReadyQueue(process); // If memory allocation fails, put the process back in the ready queue
-
-		}
-
-	}
-	else
+	// Lock only while updating running processes
 	{
-		// Lock only while updating running processes
-		{
-			std::lock_guard<std::mutex> rLock(runningMutex);
-			runningProcesses.push_back(process);
-			// cout << "Process " << process->getName() << " assigned to core " << coreID << " CPU tick:" << totalCycles.load() << endl;
-		}
-		cores[coreID]->doProcess(process);
+		std::lock_guard<std::mutex> rLock(runningMutex);
+		runningProcesses.push_back(process);
+		// cout << "Process " << process->getName() << " assigned to core " << coreID << " CPU tick:" << totalCycles.load() << endl;
 	}
-
+	if (!memoryManager->isProcessAllocated(process))
+	{
+		memoryManager->allocate(process);
+	}
+	cores[coreID]->doProcess(process);  // Core has its own mutex
 	
 }
 
@@ -102,7 +79,6 @@ void Scheduler::checkProcessesToBeRemovedFromRunning()
 	for (auto it = runningProcesses.begin(); it != runningProcesses.end(); ) {
 		if ((*it)->getProcessState() == Process::FINISHED) {
 			memoryManager->deallocate((*it)->getPID()); // Deallocate memory for the finished process
-			this->memoryManager->visualizeMemory(totalCycles.load());
 			(*it)->clearSymbolTable();
 			ConsoleManager::getInstance()->destroyProcess((*it)->getName());
 			// cout << "Process " << (*it)->getName() << " finished on core " << (*it)->getCPUCoreID() << " CPU tick:" << totalCycles.load() << endl;
@@ -125,7 +101,7 @@ void Scheduler::stopGenerationOfProcesses()
 	this->generate.store(false); // Set generate to false when stopping the process generation
 }
 
-shared_ptr<Console> Scheduler::generateRandomProcess(string name)
+shared_ptr<Console> Scheduler::generateRandomProcess(string name, bool randomizedMemorySize, uint16_t memorySize)
 {
 
 	// Generate a process
@@ -141,7 +117,16 @@ shared_ptr<Console> Scheduler::generateRandomProcess(string name)
 
 	uint64_t totalLines = minIns + (rand() % (maxIns - minIns + 1)); // Randomly generate the total number of lines for the process
 
-	shared_ptr<Process> process = make_shared<Process>(id, name, totalLines, this->memoryPerFrame, this->minMemoryPerProcess, this->maxMemoryPerProcess);
+	shared_ptr<Process> process;
+	if (randomizedMemorySize)
+	{
+		process = make_shared<Process>(id, name, totalLines, this->memoryPerFrame, this->minMemoryPerProcess, this->maxMemoryPerProcess, this->memoryManager.get());
+	}
+	else
+	{
+		process = make_shared<Process>(id, name, totalLines, this->memoryPerFrame, memorySize, memorySize, this->memoryManager.get());
+		
+	}
 
 	shared_ptr<ProcessConsole> newConsole = make_shared<ProcessConsole>(process);
 
@@ -149,7 +134,6 @@ shared_ptr<Console> Scheduler::generateRandomProcess(string name)
 	addProcessToReadyQueue(process); // Add the process to the ready queue
 	totalProcesses++;
 	return newConsole; // Return the new console for the process
-	
 }
 
 void Scheduler::run()
@@ -211,7 +195,7 @@ void Scheduler::fcfs()
 					latestProcessID++;
 					name = "process_" + to_string(latestProcessID.load());
 				}
-				generateRandomProcess(name);
+				generateRandomProcess(name, true);
 			}
 			batchCycles = 0; // Reset batch cycles after adding a new process
 		}
@@ -223,8 +207,7 @@ void Scheduler::fcfs()
 void Scheduler::rr()
 {
 	uint32_t batchCycles = 0;
-	int currentQuantumCycles = this->quantumCycles;
-	this->memoryManager->visualizeMemory(totalCycles.load());
+	auto currentQuantumCycles = this->quantumCycles;
 	while (this->running.load())
 	{
 		if (currentQuantumCycles <= 0) 
@@ -243,7 +226,6 @@ void Scheduler::rr()
 				cores[i]->setProcessBackToReadyState(); // Reset the process state to ready	
 				removeProcessFromRunningQueue(cores[i]->getCurrentProcess()); // Remove the process from the list of running processes
 				addProcessToReadyQueue(cores[i]->getCurrentProcess()); // Add the current process back to the ready queue
-				// cout << "Process " << cores[i]->getCurrentProcess()->getName() << " interrupted on core " << i << " CPU tick:" << totalCycles.load() << endl;
 			}
 		}
 		// part for added rr ends here
@@ -273,7 +255,7 @@ void Scheduler::rr()
 					latestProcessID++;
 					name = "process_" + to_string(latestProcessID.load());
 				}
-				generateRandomProcess(name);
+				generateRandomProcess(name, true);
 			}
 			batchCycles = 0; // Reset batch cycles after adding a new process
 		}
@@ -286,7 +268,7 @@ void Scheduler::printProcessesStatus(std::ostream& out)
 	
 	std::lock_guard<std::mutex> rLock(runningMutex);
 	std::lock_guard<std::mutex> fLock(finishedMutex);
-	int runningCores = runningProcesses.size();
+	auto runningCores = runningProcesses.size();
 	out << "CPU Utilization: " << (runningCores * 100) / numberOfCores << "%\n";
 	out << "Cores used: " << runningCores << "\n";
 	out << "Cores available: " << numberOfCores - runningCores << "\n\n";

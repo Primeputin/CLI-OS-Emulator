@@ -143,12 +143,7 @@ void MainConsole::processCommand (string command)
 	}
 	else if (texts.size() == 3 && texts[0] == "screen")
 	{
-		if (texts[1] == "-s")
-		{
-			recognizedCommand(command);
-			ConsoleManager::getInstance()->createProcess(texts[2]);
-		}
-		else if (texts[1] == "-r")
+		if (texts[1] == "-r")
 		{
 			recognizedCommand(command);
             ConsoleManager::getInstance()->switchToProcessConsole(texts[2]);
@@ -158,6 +153,19 @@ void MainConsole::processCommand (string command)
             cout << "You entered: " << command << "\n" << "Command invalid" << "\n\n";
         }
 	}
+    else if (texts.size() == 4 && texts[0] == "screen" && texts[1] == "-s")
+    {
+        
+        uint16_t val;
+        if (!parse_uint16_within_range(texts[3], val)) {
+            cout << "A process may contain 2^6 - 2^16 bytes of memory only" << "\n\n";
+        }
+        else
+        {
+            recognizedCommand(command);
+            ConsoleManager::getInstance()->createProcess(texts[2], val);
+        }
+    }
     else if (texts.size() != 0){
         cout << "You entered: " << command << "\n" << "Command invalid" << "\n\n";
     }
@@ -169,4 +177,20 @@ void MainConsole::getCommand()
     cout << "Enter a command: ";
     getline(cin, command);
     processCommand(command);
+}
+
+bool MainConsole::parse_uint16_within_range(const std::string& input, uint16_t& out) {
+    if (!input.empty() && input[0] == '-')
+        return false;
+
+    try {
+        unsigned long val = std::stoul(input);
+        if (val < 64 || val > std::numeric_limits<uint16_t>::max())
+            return false;
+        out = static_cast<uint16_t>(val); // modify the value even outside this function
+        return true;
+    }
+    catch (...) {
+        return false;
+    }
 }

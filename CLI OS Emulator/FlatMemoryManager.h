@@ -22,7 +22,6 @@ class FlatMemoryManager : public MemoryManager
 		bool allocate(shared_ptr<Process> process) override;
 		void deallocate(int pid) override;
 		void visualizeMemory(uint64_t currentCycle) override;
-		shared_ptr<Process> getOldestPreemptedProcess();
 		void mergeFreeMemoryPartitions();
 		bool isProcessAllocated(std::shared_ptr<Process> process) override;
 		void printMemoryStats();

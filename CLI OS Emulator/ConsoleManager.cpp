@@ -51,16 +51,15 @@ ConsoleManager::ConsoleManager() {
 	switchToMain(); // Switch to the main console
 }
 
-void ConsoleManager::createProcess(string name)
+void ConsoleManager::createProcess(string name, uint16_t memorySize)
 {
 
-	shared_ptr<Console> newConsole = this->scheduler->generateRandomProcess(name);
+	shared_ptr<Console> newConsole = this->scheduler->generateRandomProcess(name, false, memorySize);
 
 	if (newConsole)
 	{
-
 		cout << "Screen name: " << name << " created successfully." << std::endl;
-		//switchToProcessConsole(newConsole->getName());
+		switchToProcessConsole(newConsole->getName());
 	}
 }
 

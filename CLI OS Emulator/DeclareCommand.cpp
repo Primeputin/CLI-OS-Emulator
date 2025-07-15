@@ -13,8 +13,5 @@ void DeclareCommand::execute() {
 
 void DeclareCommand::logExecute(int cpuCoreID, std::string fileName)
 {
-    // temporary
-    if (process) {
-        process->declareVariable(varName, value);
-    }
+    execute();
 }

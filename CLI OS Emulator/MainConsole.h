@@ -30,6 +30,7 @@ class MainConsole : public Console
         virtual void getCommand() override;
     private:
 		bool schedulerInitialized = false; // Flag to check if scheduler is initialized
+        bool parse_uint16_within_range(const std::string& input, uint16_t& out);
 
 
 };

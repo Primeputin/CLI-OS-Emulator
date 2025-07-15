@@ -9,7 +9,8 @@
 #include <mutex>
 
 using namespace std;
-
+class MemoryManager;
+class DemandPagingMemoryManager;
 class Process
 {
 public:
@@ -21,7 +22,7 @@ public:
 		FINISHED
 	};
 
-	Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrameSize, uint32_t minMemorySize, uint32_t maxMemorySize);
+	Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrameSize, uint32_t minMemorySize, uint32_t maxMemorySize, DemandPagingMemoryManager* memoryManager);
 
 	int getPID() const;
 	bool isFinished() const;
@@ -65,7 +66,8 @@ private:
 	typedef std::vector<std::shared_ptr<ICommand>> CommandList;
 	CommandList commandList; // List of commands to be executed by the process
 	ProcessState processState = READY;
-	unordered_map<string, uint16_t> symbolTable;
+	
+	DemandPagingMemoryManager* memoryManager = nullptr;
 	mutable std::mutex mtx; // Mutex for thread safety when accessing process state and commands
 	mutable std::mutex varAccess; // Mutex for symbol table access
 	void generateCommands();

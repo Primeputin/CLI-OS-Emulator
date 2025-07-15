@@ -27,7 +27,7 @@ class ConsoleManager
 		static ConsoleManager* getInstance();
 		static void initialize();
 		static void destroy();
-		void createProcess(string name);
+		void createProcess(string name, uint16_t memorySize);
 		void destroyProcess(string name);
 		void switchToMain();
 		void switchToProcessConsole(string name);

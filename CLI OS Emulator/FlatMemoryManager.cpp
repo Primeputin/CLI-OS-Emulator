@@ -114,11 +114,6 @@ void FlatMemoryManager::printMemoryStats()
     
 }
 
-shared_ptr<Process> FlatMemoryManager::getOldestPreemptedProcess()
-{
-    return nullptr;
-}
-
 void FlatMemoryManager::mergeFreeMemoryPartitions()
 {
     for (size_t i = 0; i < memoryPartitions.size() - 1; ++i) {

@@ -10,45 +10,56 @@
 #include <unordered_map>
 #include <list>
 #include <mutex>
-#include <optional>
+#include <filesystem>
 
 class DemandPagingMemoryManager : public MemoryManager
 {
+	struct Frame {
+		int pid = -1; // Process ID that owns this frame
+		vector<int16_t> values; // supposed to be 8 bytes but just made it int16_t to mark -1 as not occupied
+	};
+
+	struct PageTableEntry {
+		int16_t physicalPage = -1;
+		bool valid = false;
+	};
+
+	struct SymbolReference {
+		int16_t virtualPage;
+		uint16_t virtualAddress; 
+	};
+
 	public:
 		DemandPagingMemoryManager(uint32_t maxOverallMemory, uint32_t memoryPerFrame, string backingStorePath);
 		bool allocate(std::shared_ptr<Process> process) override;
 		void deallocate(int pid) override;
 		void visualizeMemory(uint64_t currentCycle) override;
 		bool isProcessAllocated(std::shared_ptr<Process> process) override;
-		std::shared_ptr<Process> getOldestPreemptedProcess(); // Optional
 		void printMemoryStats();
 
-		// Access or modify a variable (will trigger page fault if needed)
-		string accessVariable(int pid, const std::string& varName);
-
+		void loadVariable(int pid, const std::string& varName, uint16_t value);
+		int16_t accessVariable(int pid, const std::string& varName);
+		void backStoreFrame(int pid, int virtualPage, const Frame& frame);
+		Frame loadFrameFromBackingStore(int pid, int virtualPage);
 	private:
-		struct Page {
-			int pid;
-			int virtualPageNumber;
-		};
-		std::vector<std::optional<Page>> memoryMap; // Physical memory map, indexed by physical page index
-		std::unordered_map<int, std::unordered_map<int, int>> pageTables; // pid -> (virtual page -> physical page)
-		std::unordered_map<int, std::unordered_map<std::string, int>> symbolTables; // pid -> varName -> virtualPage
+		vector<Frame> memoryMap;
 		uint32_t maxOverAllMemory;
 		uint32_t memoryPerFrame;
 		uint32_t maxPhysicalPages;
 		uint32_t numPagedIn = 0;
 		uint32_t numPagedOut = 0;
 
-		std::list<std::pair<int, int>> lruQueue; // (pid, virtualPage)
+		unordered_map<int, unordered_map<int16_t, PageTableEntry>> pageTables; // pid -> (virtual page -> physical page and valid bit)
+		unordered_map<int, unordered_map<string, SymbolReference>> symbolTables; // pid -> varName -> virtualPage and the virtualAddress
+		std::list<pair<int, int16_t>> lruQueue; // (pid, virtualPage)
 		std::string backingStorePath;
-		std::fstream backingStore;
 
 		std::mutex memoryLock;
 
-		void pageIn(int pid, int virtualPage);
-		void pageOut(int physicalPageIndex);
-		int findFreeOrLRUPage();
+		uint16_t into2Bytes(uint8_t first, uint8_t second); // little endian
+		void pageIn(int pid, int16_t virtualPage);
+		void pageOut(int16_t physicalPageIndex, int16_t virtualPage);
+		uint32_t findFreeOrLRUPage(int16_t virtualPage);
 		void updateLRU(int pid, int virtualPage);
 
 };

@@ -14,45 +14,19 @@
 #include "AddCommand.h"
 #include "SubtractCommand.h"
 #include "SleepCommand.h"
+#include "DemandPagingMemoryManager.h"
 
-
-Process::Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrameSize, uint32_t minMemorySize, uint32_t maxMemorySize)
+Process::Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrameSize, uint32_t minMemorySize, uint32_t maxMemorySize, DemandPagingMemoryManager* memoryManager)
 {
 	this->pid = pid;
 	this->name = name;
 	this->currentLine = 0;
 	this->totalLines = totalLines;
 	this->createdTime = time(nullptr);
-
-	nPages = memorySize / memoryFrameSize;
+	this->memoryManager = memoryManager;
 	setRandomizedMemSize(minMemorySize, maxMemorySize);
+	this->nPages = memorySize / memoryFrameSize;
 	generateCommands();
-	// Example commands for testing purposes
-	/*symbolTable["x"] = 0;
-	symbolTable["y"] = 0;
-	symbolTable["y"] = 0;
-	for (int i = 0; i < 100; i++)
-	{
-		this->addCommand(make_shared<AddCommand>(pid, "x", "x", "1", this));
-		this->addCommand(make_shared<PrintVariableCommand>(pid, "x", this));
-		this->addCommand(make_shared<AddCommand>(pid, "y", "y", "1", this));
-		this->addCommand(make_shared<PrintVariableCommand>(pid, "y", this));
-		this->addCommand(make_shared<AddCommand>(pid, "z", "z", "1", this));
-		this->addCommand(make_shared<PrintVariableCommand>(pid, "z", this));
-	}*/
-	/*symbolTable["x"] = 0;
-	for (int i = 0; i < totalLines; i++)
-	{
-		if (i % 2 == 0)
-		{
-			this->addCommand(make_shared<PrintVariableCommand>(pid, "x", this));
-		}
-		else
-		{
-			uint16_t value = 1 + (rand() % 10);
-			this->addCommand(make_shared<AddCommand>(pid, "x", "x", to_string(value), this));
-		}
-	}*/
 }
 
 int Process::getPID() const
@@ -108,15 +82,18 @@ void Process::setCPUCoreID(int coreID)
 void Process::declareVariable(const std::string& varName, uint16_t value)
 {
 	std::lock_guard<std::mutex> symLock(varAccess);
-	symbolTable[varName] = value;
+	memoryManager->loadVariable(pid, varName, value);
+
+	
 }
 
 bool Process::getVariableValue(const std::string& varName, uint16_t& outValue) const
 {
 	std::lock_guard<std::mutex> symLock(varAccess);
-	auto it = symbolTable.find(varName);
-	if (it != symbolTable.end()) {
-		outValue = it->second;
+	int16_t result =  memoryManager->accessVariable(pid, varName);
+	if (result >= 0)
+	{
+		outValue = static_cast<uint16_t>(result);
 		return true;
 	}
 	return false;
@@ -163,8 +140,10 @@ std::vector<std::string> Process::getLogs() const {
 	return logs;
 }
 
-void Process::clearSymbolTable() {
-	symbolTable.clear();
+void Process::clearSymbolTable() 
+{
+	memoryManager->deallocate(pid);
+
 }
 
 void Process::generateCommands() {

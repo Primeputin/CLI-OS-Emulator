@@ -23,9 +23,8 @@ Process::Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrame
 	this->currentLine = 0;
 	this->totalLines = totalLines;
 	this->createdTime = time(nullptr);
-
-	nPages = memorySize / memoryFrameSize;
 	setRandomizedMemSize(minMemorySize, maxMemorySize);
+	nPages = memorySize / memoryFrameSize;
 	generateCommands();
 	// Example commands for testing purposes
 	/*symbolTable["x"] = 0;

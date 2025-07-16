@@ -59,7 +59,7 @@ void ConsoleManager::createProcess(string name, uint16_t memorySize)
 	if (newConsole)
 	{
 		cout << "Screen name: " << name << " created successfully." << std::endl;
-		switchToProcessConsole(newConsole->getName());
+		// switchToProcessConsole(newConsole->getName());
 	}
 }
 
@@ -210,6 +210,26 @@ void ConsoleManager::listProcesses(bool outToFile)
 			scheduler->printProcessesStatus(cout);	
 		}
 
+	}
+	else {
+		cerr << "Scheduler is not initialized." << endl;
+	}
+}
+
+void ConsoleManager::vmstat()
+{
+	if (scheduler) {
+		scheduler->vmstat();
+	}
+	else {
+		cerr << "Scheduler is not initialized." << endl;
+	}
+}
+
+void ConsoleManager::printMemoryUsage(int pid)
+{
+	if (scheduler) {
+		scheduler->printMemoryUsage(pid);
 	}
 	else {
 		cerr << "Scheduler is not initialized." << endl;

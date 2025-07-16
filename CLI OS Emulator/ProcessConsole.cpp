@@ -38,6 +38,7 @@ void ProcessConsole::processCommand(std::string command) {
             std::cout << "\nFinished!" << std::endl;
         }
         else {
+            ConsoleManager::getInstance()->printMemoryUsage(process->getPID());
             std::cout << "\nCurrent instruction line: " << process->getCurrentLine() << std::endl;
             std::cout << "Lines of code: " << process->getTotalLines() << std::endl;
         }

@@ -26,6 +26,9 @@ Process::Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrame
 	this->memoryManager = memoryManager;
 	setRandomizedMemSize(minMemorySize, maxMemorySize);
 	this->nPages = memorySize / memoryFrameSize;
+	if (this->nPages == 0) {
+		this->nPages = 1; // Ensure at least one page
+	}
 	generateCommands();
 }
 
@@ -401,5 +404,5 @@ void Process::setRandomizedMemSize(uint32_t minMemorySize, uint32_t maxMemorySiz
 	uniform_int_distribution<size_t> dist(0, powersOfTwos.size() - 1);
 
 	memorySize = powersOfTwos[dist(gen)];
-
+	
 }

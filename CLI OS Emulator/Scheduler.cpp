@@ -310,6 +310,24 @@ void Scheduler::printProcessesStatus(std::ostream& out)
 	out << "--------------------------\n";
 }
 
+void Scheduler::vmstat()
+{
+	uint64_t activeTicks = 0;
+	uint64_t idleTicks = 0;
+	for (uint64_t i = 0; i < numberOfCores; i++) {
+		activeTicks += cores[i]->getActiveTicks();
+		idleTicks += cores[i]->getIdleTicks();
+	}
+	this->memoryManager->printMemoryStats(activeTicks, idleTicks);
+}
+
+void Scheduler::printMemoryUsage(int pid)
+{
+	auto memoryUsed = this->memoryManager->memoryUsage(pid);
+	cout << "Memory Usage: " << memoryUsed <<endl;
+	cout << "Memory Utilized: " << this->memoryManager->memoryUsagePercentage(memoryUsed) << "%" << endl;
+}
+
 
 uint64_t Scheduler::getTotalCycles()
 {

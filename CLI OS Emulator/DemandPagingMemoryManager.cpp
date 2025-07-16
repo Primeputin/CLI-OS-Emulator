@@ -15,8 +15,9 @@ DemandPagingMemoryManager::DemandPagingMemoryManager(uint32_t maxOverallMemory, 
 
 bool DemandPagingMemoryManager::allocate(shared_ptr<Process> process)
 {
-    std::lock_guard<std::mutex> lock(memoryLock);
     
+    std::lock_guard<std::mutex> lock(memoryLock);
+	
     for (uint32_t i = 0; i < process->getNPages(); i++)
     {
 	    backStoreFrame(process->getPID(), i, Frame(-1, vector<int16_t>(this->memoryPerFrame, -1))); // Initialize the backing store for this process
@@ -35,15 +36,19 @@ void DemandPagingMemoryManager::deallocate(int pid)
 			memoryMap[i].values.assign(memoryPerFrame, 0); // Reset values
 			pageTables.erase(pid); // Remove the page table entry for this process
 			symbolTables.erase(pid); // Remove the symbol table entry for this process
+			
         }
     }
+    lruQueue.remove_if([pid](const std::pair<int, int16_t>& entry) {
+        return entry.first == pid; // Remove all entries for this process
+        });
 
 }
 
 void DemandPagingMemoryManager::visualizeMemory(uint64_t currentCycle) {
 
     std::lock_guard<std::mutex> lock(memoryLock);
-
+    
 }
 
 bool DemandPagingMemoryManager::isProcessAllocated(std::shared_ptr<Process> process) // placed in the back store basically
@@ -51,21 +56,60 @@ bool DemandPagingMemoryManager::isProcessAllocated(std::shared_ptr<Process> proc
     std::lock_guard<std::mutex> lock(memoryLock);
 	if (pageTables.find(process->getPID()) != pageTables.end() && !pageTables[process->getPID()].empty())
 	{
-		return true; // Process has pages allocated
+		return true; 
 	}
     return false;
 }
 
-void DemandPagingMemoryManager::printMemoryStats()
+void DemandPagingMemoryManager::printMemoryStats(uint64_t activeTicks, uint64_t idleTicks)
 {
-    std::cout << "Pages Paged In: " << numPagedIn << std::endl;
-    std::cout << "Pages Paged Out: " << numPagedOut << std::endl;
+    cout << "-------------------------------------------------" << endl;
+    cout << "| VMSTAT                                        |" << endl;
+    cout << "-------------------------------------------------" << endl;
+    cout << setw(9) << maxOverAllMemory << "  Total Memory" << endl;
+
+    uint32_t usedFrames = 0;
+    for (int i = 0; i < memoryMap.size(); i++)
+    {
+        if (memoryMap[i].pid != -1) {
+            usedFrames++;
+        }
+    }
+    cout << setw(9) << usedFrames * memoryPerFrame << "  Used Memory" << endl;
+    cout << setw(9) << (this->maxPhysicalPages - usedFrames) * memoryPerFrame << "  Free Memory" << endl;
+	cout << "-------------------------------------------------" << endl;
+    cout << setw(9) << idleTicks << "  Idle CPU ticks" << endl;
+    cout << setw(9) << activeTicks << "  Active CPU ticks" << endl;
+    cout << setw(9) << idleTicks + activeTicks << "  Total CPU ticks" << endl;
+    cout << "Pages Paged In: " << numPagedIn << endl;
+    cout << "Pages Paged Out: " << numPagedOut << endl;
+    cout << "<<------------------------------------------------->>" << endl;
+}
+
+uint32_t DemandPagingMemoryManager::memoryUsage(int pid)
+{
+	std::lock_guard<std::mutex> lock(memoryLock);
+	if (pageTables.find(pid) == pageTables.end()) {
+		return 0; // Process not found
+	}
+	uint32_t usedMemory = 0;
+    for (const auto& entry : pageTables[pid]) {
+		if (entry.second.valid) {
+			usedMemory += memoryPerFrame; // Each valid page contributes memoryPerFrame bytes
+		}
+    }
+    return usedMemory;
+}
+
+uint32_t DemandPagingMemoryManager::memoryUsagePercentage(uint32_t memoryUsage)
+{
+    return memoryUsage * 100.0 / this->maxOverAllMemory;
 }
 
 void DemandPagingMemoryManager::loadVariable(int pid, const std::string& varName, uint16_t value)
 {
 	std::lock_guard<std::mutex> lock(memoryLock);
-
+    
     if (symbolTables[pid].size() >= 32)
     {
 		return; // Limit to 32 variables per process
@@ -124,34 +168,21 @@ void DemandPagingMemoryManager::backStoreFrame(int pid, int virtualPage, const F
     
     std::ofstream out(backingStorePath, std::ios::app); // append mode
     if (!out) throw std::runtime_error("Failed to open file for writing");
-
-    out << "# PID: " << pid << " PAGE: " << virtualPage << "\n";
-
-    const std::vector<int16_t>& bytes = frame.values;
-    if (bytes.size() % 2 != 0) {
+    if (frame.values.size() % 2 != 0) {
         throw std::runtime_error("Frame size must be even to pack into uint16_t");
     }
 
-    uint32_t i = 0;
-    while (i < bytes.size())
-    {
-        // means null or unoccupied
-        if (bytes[i] < 0) {
-            out << -1;
-            if (i + 1 < bytes.size()) out << " ";
-            i++;
-        }
-        else
-        {
-			uint16_t combined = into2Bytes(static_cast<uint8_t>(bytes[i]), static_cast<uint8_t>(bytes[i + 1]));
-            out << combined;
-            if (i + 2 < bytes.size()) out << " ";
-            i += 2;
-        }
+    out << "# PID: " << pid << " PAGE: " << virtualPage << "\n";
+    
+    for (uint32_t i = 0; i < frame.values.size(); ++i) {
+        out << frame.values[i];
+        if (i != frame.values.size() - 1) out << "\n";
     }
-
+    
     out << "\n";
     out.close();
+
+
 }
 
 DemandPagingMemoryManager::Frame DemandPagingMemoryManager::loadFrameFromBackingStore(int pid, int virtualPage) 
@@ -165,8 +196,8 @@ DemandPagingMemoryManager::Frame DemandPagingMemoryManager::loadFrameFromBacking
     Frame result;
     bool found = false;
     bool inTargetBlock = false;
-
-    while (std::getline(in, line) && result.values.size() < memoryPerFrame) {
+	
+    while (std::getline(in, line)) {
         if (line.starts_with("# PID:")) {
             std::istringstream header(line);
             std::string tmp;
@@ -176,6 +207,7 @@ DemandPagingMemoryManager::Frame DemandPagingMemoryManager::loadFrameFromBacking
             if (filePid == pid && filePage == virtualPage) {
                 found = true;
                 inTargetBlock = true;
+				result.pid = pid;
                 continue; // skip this header (don’t write it back)
             }
             else {
@@ -183,25 +215,16 @@ DemandPagingMemoryManager::Frame DemandPagingMemoryManager::loadFrameFromBacking
                 newFileContent << line << "\n"; // keep unrelated header
             }
         }
-        else if (inTargetBlock) {
-            std::istringstream values(line);
-            std::string token;
-
-            while (values >> token) {
-                if (token == "-1") {
-					result.values.push_back(-1); // means null or unoccupied
-                }
-                else {
-                    // parse as uint16_t then unpack
-                    uint16_t packed = static_cast<uint16_t>(std::stoi(token));
-                    int16_t low = packed & 0xFF;
-                    int16_t high = (packed >> 8) & 0xFF;
-                    result.values.push_back(low);
-                    result.values.push_back(high);
-                }
+        else if (inTargetBlock && result.values.size() < memoryPerFrame)
+        {
+    
+            int value = std::stoi(line);
+            if (value == -1) {
+                result.values.push_back(-1);
             }
-
-            inTargetBlock = false;
+            else {
+                result.values.push_back(static_cast<uint8_t>(value));
+            }
         }
         else {
             newFileContent << line << "\n";
@@ -220,7 +243,7 @@ DemandPagingMemoryManager::Frame DemandPagingMemoryManager::loadFrameFromBacking
     std::ofstream out(backingStorePath, std::ios::trunc);
     out << newFileContent.str();
     out.close();
-
+	
     return result;
    
 }
@@ -237,7 +260,6 @@ void DemandPagingMemoryManager::pageIn(int pid, int16_t virtualPage)
     memoryMap[physicalPage] = loadFrameFromBackingStore(pid, virtualPage);
     pageTables[pid][virtualPage].physicalPage = physicalPage;
 	pageTables[pid][virtualPage].valid = true;
-    updateLRU(pid, virtualPage);
     numPagedIn++;
 }
 
@@ -247,7 +269,8 @@ void DemandPagingMemoryManager::pageOut(int16_t physicalPageIndex, int16_t virtu
     if (frame.pid < 0) return;
 
     auto pid = frame.pid;
-
+	
+	
 	backStoreFrame(pid, virtualPage, frame);
 
     // Remove from page table

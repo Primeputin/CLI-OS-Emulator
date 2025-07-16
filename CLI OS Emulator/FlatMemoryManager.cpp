@@ -109,7 +109,7 @@ void FlatMemoryManager::visualizeMemory(uint64_t currentCycle)
     out.close();
 }
 
-void FlatMemoryManager::printMemoryStats()
+void FlatMemoryManager::printMemoryStats(uint64_t activeTicks, uint64_t idleTicks)
 {
     
 }

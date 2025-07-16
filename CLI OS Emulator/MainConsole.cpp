@@ -63,14 +63,12 @@ void MainConsole::screen(string command)
 void MainConsole::schedulerStart(string command)
 {
     recognizedCommand(command);
-    // TODO: Create randomized processes
     ConsoleManager::getInstance()->generateProcesses();
 }
 
 void MainConsole::schedulerStop(string command)
 {
     recognizedCommand(command);
-    // TODO: Stop making randomized processes
     ConsoleManager::getInstance()->stopGenerationOfProcesses();
 }
 
@@ -78,6 +76,12 @@ void MainConsole::reportUtil(string command)
 {
     recognizedCommand(command);
 	ConsoleManager::getInstance()->listProcesses(true);
+}
+
+void MainConsole::vmstat(string command)
+{
+    recognizedCommand(command);
+    ConsoleManager::getInstance()->vmstat();
 }
 
 void MainConsole::processCommand (string command)
@@ -120,6 +124,10 @@ void MainConsole::processCommand (string command)
         else if (command == "report-util")
         {
             reportUtil(command);
+        }
+        else if (command == "vmstat")
+        {
+            vmstat(command);
         }
         else if (command == "exit")
         {

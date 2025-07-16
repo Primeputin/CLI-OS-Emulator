@@ -39,6 +39,8 @@ class Scheduler
 		void fcfs();
 		void rr();
 		void printProcessesStatus(std::ostream& out);
+		void vmstat();
+		void printMemoryUsage(int pid);
 		uint64_t getTotalCycles();
 		uint64_t getTotalProcesses();
 	private:

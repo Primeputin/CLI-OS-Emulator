@@ -24,7 +24,7 @@ class FlatMemoryManager : public MemoryManager
 		void visualizeMemory(uint64_t currentCycle) override;
 		void mergeFreeMemoryPartitions();
 		bool isProcessAllocated(std::shared_ptr<Process> process) override;
-		void printMemoryStats();
+		void printMemoryStats(uint64_t activeTicks, uint64_t idleTicks);
 
 	private:
 		vector<MemoryPartition> memoryPartitions;

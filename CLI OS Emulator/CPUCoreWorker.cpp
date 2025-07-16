@@ -7,6 +7,9 @@ CPUCoreWorker::CPUCoreWorker(int coreID, uint64_t quantumCycles, uint64_t batchP
 	minIns(minIns), maxIns(maxIns), delayPerExecution(delayPerExecution), startSem(startSem), endSem(endSem), running(false)
 {
 	this->currentQuantumCycles.store(this->quantumCycles);
+	this->currentCycle.store(0); 
+	this->activeCycles.store(0); 
+	this->idleCycles.store(0); 
 	coreThread = thread(&CPUCoreWorker::run, this); // thread for running the process
 
 }
@@ -32,11 +35,18 @@ void CPUCoreWorker::run()
 	{
 		// startSem->acquire(); // Wait for the signal to start running
 		currentCycle++; // Increment the cycle count for this core
+		if (running.load() && this->currentProcess != nullptr)
+		{
+			this->activeCycles++; // Increment active cycles if the core is running a process
+		}
+		else
+		{
+			this->idleCycles++; // Increment idle cycles if the core is not running a process
+		}
 		if (currentCycle.load() >= delayPerExecution + 1)
 		{
 			if (running.load())
 			{
-				
 				this->currentProcess->executeCurrentCommand(); // Execute the current command of the process
 				if (!this->currentProcess->isSleeping())
 				{
@@ -49,6 +59,7 @@ void CPUCoreWorker::run()
 				}
 				currentCycle = 0;
 			}
+
 		}
 		if (running.load() && this->currentQuantumCycles.load() > 0)
 		{
@@ -102,6 +113,16 @@ void CPUCoreWorker::setProcessBackToReadyState()
 
 	this->currentProcess->setProcessState(Process::READY); // Set the process state to ready
 
+}
+
+uint64_t CPUCoreWorker::getActiveTicks()
+{
+	return this->activeCycles.load();
+}
+
+uint64_t CPUCoreWorker::getIdleTicks()
+{
+	return this->idleCycles.load();
 }
 
 

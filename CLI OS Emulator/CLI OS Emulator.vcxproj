@@ -144,9 +144,11 @@
     <ClCompile Include="PrintVariableCommand.cpp" />
     <ClCompile Include="Process.cpp" />
     <ClCompile Include="ProcessConsole.cpp" />
+    <ClCompile Include="ReadCommand.cpp" />
     <ClCompile Include="Scheduler.cpp" />
     <ClCompile Include="SleepCommand.cpp" />
     <ClCompile Include="SubtractCommand.cpp" />
+    <ClCompile Include="WriteCommand.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AddCommand.h" />
@@ -164,9 +166,11 @@
     <ClInclude Include="PrintVariableCommand.h" />
     <ClInclude Include="Process.h" />
     <ClInclude Include="ProcessConsole.h" />
+    <ClInclude Include="ReadCommand.h" />
     <ClInclude Include="Scheduler.h" />
     <ClInclude Include="SleepCommand.h" />
     <ClInclude Include="SubtractCommand.h" />
+    <ClInclude Include="WriteCommand.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

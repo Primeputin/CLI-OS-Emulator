@@ -39,6 +39,9 @@ class DemandPagingMemoryManager : public MemoryManager
 		uint32_t memoryUsage(int pid);
 		uint32_t memoryUsagePercentage(uint32_t memoryUsage);
 
+		uint16_t getValueFromAddress(uint16_t address);
+		void writeValueToMemory(uint16_t value, uint16_t address);
+
 		void loadVariable(int pid, const std::string& varName, uint16_t value);
 		int16_t accessVariable(int pid, const std::string& varName);
 		void backStoreFrame(int pid, int virtualPage, const Frame& frame);

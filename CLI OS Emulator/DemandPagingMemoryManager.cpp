@@ -106,6 +106,58 @@ uint32_t DemandPagingMemoryManager::memoryUsagePercentage(uint32_t memoryUsage)
     return memoryUsage * 100.0 / this->maxOverAllMemory;
 }
 
+uint16_t DemandPagingMemoryManager::getValueFromAddress(uint16_t address)
+{
+	std::lock_guard<std::mutex> lock(memoryLock);
+       
+    try {
+
+		if (address >= memoryMap.size() * memoryPerFrame || address % 2 != 0) 
+		{
+			throw std::runtime_error("Invalid address");
+		}
+
+        uint16_t nextAddress = address + 1;
+
+		//TODO: Check 
+
+		uint16_t value = into2Bytes(static_cast<uint8_t>(memoryMap[address / memoryPerFrame].values[address % memoryPerFrame]), 
+            static_cast<uint8_t>(memoryMap[nextAddress / memoryPerFrame].values[nextAddress % memoryPerFrame]));
+
+        return value;
+    }
+    catch (const std::runtime_error& e){
+
+        return 0;
+    }
+
+    return -1;
+
+}
+
+void DemandPagingMemoryManager::writeValueToMemory(uint16_t value, uint16_t address)
+{
+	std::lock_guard<std::mutex> lock(memoryLock);
+
+	if (address >= memoryMap.size() * memoryPerFrame || address % 2 != 0)
+	{
+		throw std::runtime_error("Invalid address");
+	}
+
+	uint16_t nextAddress = address + 1;
+	uint8_t firstByte = value & 0xFF;
+	uint8_t secondByte = (value >> 8) & 0xFF;
+
+    try {
+        memoryMap[address / memoryPerFrame].values[address % memoryPerFrame] = firstByte;
+        memoryMap[nextAddress / memoryPerFrame].values[nextAddress % memoryPerFrame] = secondByte;
+	}
+    catch (const std::out_of_range& e) {
+        throw std::runtime_error("Memory access out of range");
+    }
+}
+
+
 void DemandPagingMemoryManager::loadVariable(int pid, const std::string& varName, uint16_t value)
 {
 	std::lock_guard<std::mutex> lock(memoryLock);

@@ -15,6 +15,7 @@
 #include "SubtractCommand.h"
 #include "SleepCommand.h"
 #include "DemandPagingMemoryManager.h"
+#include "ReadCommand.h"
 
 Process::Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrameSize, uint32_t minMemorySize, uint32_t maxMemorySize, DemandPagingMemoryManager* memoryManager)
 {
@@ -29,7 +30,19 @@ Process::Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrame
 	if (this->nPages == 0) {
 		this->nPages = 1; // Ensure at least one page
 	}
-	generateCommands();
+
+
+	/*string vars[] = { "x", "text", "y" };
+	uint16_t values[] = { 65534, 420};*/
+
+
+	/*commandList.push_back(std::make_shared<DeclareCommand>(pid, vars[0], values[0], this));
+	commandList.push_back(std::make_shared<DeclareCommand>(pid, vars[1], values[1], this));
+	commandList.push_back(std::make_shared<ReadCommand>(pid, vars[2], "0x0000", this));
+	commandList.push_back(std::make_shared<ReadCommand>(pid, vars[2], "0x0001", this));*/
+
+	
+	//generateCommands();
 }
 
 int Process::getPID() const
@@ -86,8 +99,6 @@ void Process::declareVariable(const std::string& varName, uint16_t value)
 {
 	std::lock_guard<std::mutex> symLock(varAccess);
 	memoryManager->loadVariable(pid, varName, value);
-
-	
 }
 
 bool Process::getVariableValue(const std::string& varName, uint16_t& outValue) const
@@ -111,6 +122,24 @@ bool Process::isSleeping() const
 		}
 	}
 	return false;
+}
+
+void Process::readVariable(const std::string varName, uint16_t address) const
+{
+	std::lock_guard<std::mutex> symLock(varAccess);
+	uint16_t val = memoryManager->getValueFromAddress(address); // This will throw an exception if the variable is not found
+	
+	cout << "[READ DEBUG] Value: " << val << endl;
+	
+	memoryManager->loadVariable(pid, varName, val); // Load the variable into the process's memory
+
+	cout << "[READ DEBUG] Variable " << varName << ": " << (uint16_t)memoryManager->accessVariable(pid, varName) << endl;
+}
+
+void Process::writeToMemory(uint16_t address, uint16_t value) const
+{
+	std::lock_guard<std::mutex> symLock(varAccess);
+	memoryManager->writeValueToMemory(value, address); 
 }
 
 string Process::getName() const {
@@ -404,5 +433,4 @@ void Process::setRandomizedMemSize(uint32_t minMemorySize, uint32_t maxMemorySiz
 	uniform_int_distribution<size_t> dist(0, powersOfTwos.size() - 1);
 
 	memorySize = powersOfTwos[dist(gen)];
-	
 }

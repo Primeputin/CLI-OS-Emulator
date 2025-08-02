@@ -38,12 +38,12 @@ Process::Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrame
 
 
 	commandList.push_back(std::make_shared<DeclareCommand>(pid, vars[0], values[1], this));
-	commandList.push_back(make_shared<WriteCommand>(pid, "0x4", 69, this));
+	commandList.push_back(std::make_shared<WriteCommand>(pid, "0x4", 69, this));
 	commandList.push_back(std::make_shared<ReadCommand>(pid, vars[0], "0x4", this));
 	// commandList.push_back(std::make_shared<ReadCommand>(pid, vars[2], "0x0001", this));
 
 	
-	// generateCommands();
+	 generateCommands();
 }
 
 int Process::getPID() const
@@ -346,6 +346,14 @@ void Process::generateCommands() {
 
 				}
 				break;
+			}
+			case 6: // Write Command
+			{
+
+			}
+			case 7: // Read Command
+			{
+
 			}
 			default:
 			{

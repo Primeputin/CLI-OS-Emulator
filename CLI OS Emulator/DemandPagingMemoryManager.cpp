@@ -194,7 +194,7 @@ void DemandPagingMemoryManager::writeValueToMemory(int pid, uint32_t memorySize,
         auto physicalPage = pageTables[pid][address / memoryPerFrame].physicalPage;
         auto physicalPageOfNextAddress = pageTables[pid][nextAddress / memoryPerFrame].physicalPage;
 
-        memoryMap[physicalPage].values[physicalPage] = firstByte;
+        memoryMap[physicalPage].values[offset] = firstByte;
         memoryMap[physicalPageOfNextAddress].values[physicalPageOfNextAddress] = secondByte;
 	}
     catch (const std::out_of_range& e) {

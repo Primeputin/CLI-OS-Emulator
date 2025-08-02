@@ -15,8 +15,6 @@ void ReadCommand::execute() {
 			string hex = address.substr(2, 4);
 
 			uint16_t addressValue = std::stoi(hex, nullptr, 16);
-
-			cout << "[READ DEBUG] Hex: " << hex << " | Decimal: " << addressValue << endl;
 			process->readVariable(varName, addressValue); // Read the variable from the process's memory
 
 			

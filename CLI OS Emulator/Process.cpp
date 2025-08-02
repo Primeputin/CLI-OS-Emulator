@@ -30,20 +30,8 @@ Process::Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrame
 	this->nPages = memorySize / memoryFrameSize;
 	if (this->nPages == 0) {
 		this->nPages = 1; // Ensure at least one page
-	}
-
-
-	string vars[] = { "x", "text", "y" };
-	uint16_t values[] = { 256, 1 };
-
-
-	commandList.push_back(std::make_shared<DeclareCommand>(pid, vars[0], values[1], this));
-	commandList.push_back(std::make_shared<WriteCommand>(pid, "0x4", 69, this));
-	commandList.push_back(std::make_shared<ReadCommand>(pid, vars[0], "0x4", this));
-	// commandList.push_back(std::make_shared<ReadCommand>(pid, vars[2], "0x0001", this));
-
-	
-	 generateCommands();
+	}	
+	generateCommands();
 }
 
 int Process::getPID() const
@@ -129,24 +117,14 @@ void Process::readVariable(const std::string varName, uint16_t address) const
 {
 	std::lock_guard<std::mutex> symLock(varAccess);
 	uint16_t val = memoryManager->getValueFromAddress(this->getPID(), this->memorySize, address); // This will throw an exception if the variable is not found
-	
-	cout << "[READ DEBUG] Value: " << val << endl;
-	
 	memoryManager->loadVariable(pid, varName, val); // Load the variable into the process's memory
-
-	cout << "[READ DEBUG] Variable " << varName << ": " << (uint16_t)memoryManager->accessVariable(pid, varName) << endl;
 }
 
 void Process::readVariable(const std::string varName, string varNameToBeReadFrom) const
 {
 	std::lock_guard<std::mutex> symLock(varAccess);
 	uint16_t val = memoryManager->getValueFromAddressToVariable(this->getPID(), this->memorySize, varNameToBeReadFrom); // This will throw an exception if the variable is not found
-
-	cout << "[READ DEBUG] Value: " << val << endl;
-
 	memoryManager->loadVariable(pid, varName, val); // Load the variable into the process's memory
-
-	cout << "[READ DEBUG] Variable " << varName << ": " << (uint16_t)memoryManager->accessVariable(pid, varName) << endl;
 }
 
 void Process::writeToMemory(uint16_t address, uint16_t value) const
@@ -206,7 +184,7 @@ void Process::generateCommands() {
 	// Helper lambda that contains the original randomization logic for basic commands
 	auto generateSingleCommand = [&]() -> shared_ptr<ICommand> {
 		// NOTE: BY DEFAULT, PRINT VARIABLE IS NOT INCLUDED IN THE RANDOMIZATION
-		int randomizedCommand = rand() % 4; // Randomly choose a command type
+		int randomizedCommand = rand() % 6; // Randomly choose a command type
 
 		switch (randomizedCommand)
 		{
@@ -304,12 +282,20 @@ void Process::generateCommands() {
 				}
 				break;
 			}
-			case 4: // Sleep command
+			case 4: // Write Command
+			{
+				return make_shared<WriteCommand>(pid, "0x00", 39, this);
+			}
+			case 5: // Read Command
+			{
+				return make_shared<ReadCommand>(pid, "readVar", "0x00", this);
+			}
+			case 6: // Sleep command
 			{
 				return make_shared<SleepCommand>(pid, rand() % 256, this);
 				break;
 			}
-			case 5: // Print command for variable value
+			case 7: // Print command for variable value
 			{
 				int numberOfVariations = 1;
 				if (isResultDeclared) // If result variable is declared, print it
@@ -347,14 +333,6 @@ void Process::generateCommands() {
 				}
 				break;
 			}
-			case 6: // Write Command
-			{
-
-			}
-			case 7: // Read Command
-			{
-
-			}
 			default:
 			{
 				return nullptr; // Should not happen, but just in case
@@ -371,7 +349,7 @@ void Process::generateCommands() {
 
 		while (localGenerated < maxCommands) {
 			int remaining = maxCommands - localGenerated;
-			int commandChoice = rand() % 7;
+			int commandChoice = rand() % 8;
 
 			// Handle loop case (if allowed by depth and remaining commands)
 			if (commandChoice == 6 && currentDepth < MAX_NEST_LEVEL && remaining > 1) {

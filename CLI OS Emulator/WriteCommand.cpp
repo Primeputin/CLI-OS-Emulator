@@ -14,7 +14,6 @@ void WriteCommand::execute() {
 		{
 			std::string hex = address.substr(2, 4);
 			uint16_t addressValue = std::stoi(hex, nullptr, 16);
-			// TODO: check if the address parameter is a literal address or variable name
 			process->writeToMemory(addressValue, value); 
 		}
 		else

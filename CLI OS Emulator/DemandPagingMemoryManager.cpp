@@ -20,6 +20,10 @@ bool DemandPagingMemoryManager::allocate(shared_ptr<Process> process)
 	
     for (uint32_t i = 0; i < process->getNPages(); i++)
     {
+		if (i >= maxPhysicalPages) {
+			throw std::runtime_error("Not enough physical pages available for the process");
+		}
+		pageTables[process->getPID()][i] = PageTableEntry{ -1, false }; // Initialize the page table entry for this process
 	    backStoreFrame(process->getPID(), i, Frame(-1, vector<uint8_t>(this->memoryPerFrame, 0))); // Initialize the backing store for this process
     }
 
@@ -195,7 +199,7 @@ void DemandPagingMemoryManager::writeValueToMemory(int pid, uint32_t memorySize,
         auto physicalPageOfNextAddress = pageTables[pid][nextAddress / memoryPerFrame].physicalPage;
 
         memoryMap[physicalPage].values[offset] = firstByte;
-        memoryMap[physicalPageOfNextAddress].values[physicalPageOfNextAddress] = secondByte;
+        memoryMap[physicalPageOfNextAddress].values[offsetOfNextAddress] = secondByte;
 	}
     catch (const std::out_of_range& e) {
         throw std::runtime_error("Memory access out of range");

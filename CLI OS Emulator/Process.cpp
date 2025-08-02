@@ -15,6 +15,8 @@
 #include "SubtractCommand.h"
 #include "SleepCommand.h"
 #include "DemandPagingMemoryManager.h"
+#include "ReadCommand.h"
+#include "WriteCommand.h"
 
 Process::Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrameSize, uint32_t minMemorySize, uint32_t maxMemorySize, DemandPagingMemoryManager* memoryManager)
 {
@@ -28,7 +30,7 @@ Process::Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrame
 	this->nPages = memorySize / memoryFrameSize;
 	if (this->nPages == 0) {
 		this->nPages = 1; // Ensure at least one page
-	}
+	}	
 	generateCommands();
 }
 
@@ -86,8 +88,6 @@ void Process::declareVariable(const std::string& varName, uint16_t value)
 {
 	std::lock_guard<std::mutex> symLock(varAccess);
 	memoryManager->loadVariable(pid, varName, value);
-
-	
 }
 
 bool Process::getVariableValue(const std::string& varName, uint16_t& outValue) const
@@ -111,6 +111,32 @@ bool Process::isSleeping() const
 		}
 	}
 	return false;
+}
+
+void Process::readVariable(const std::string varName, uint16_t address) const
+{
+	std::lock_guard<std::mutex> symLock(varAccess);
+	uint16_t val = memoryManager->getValueFromAddress(this->getPID(), this->memorySize, address); // This will throw an exception if the variable is not found
+	memoryManager->loadVariable(pid, varName, val); // Load the variable into the process's memory
+}
+
+void Process::readVariable(const std::string varName, string varNameToBeReadFrom) const
+{
+	std::lock_guard<std::mutex> symLock(varAccess);
+	uint16_t val = memoryManager->getValueFromAddressToVariable(this->getPID(), this->memorySize, varNameToBeReadFrom); // This will throw an exception if the variable is not found
+	memoryManager->loadVariable(pid, varName, val); // Load the variable into the process's memory
+}
+
+void Process::writeToMemory(uint16_t address, uint16_t value) const
+{
+	std::lock_guard<std::mutex> symLock(varAccess);
+	memoryManager->writeValueToMemory(this->getPID(), this->memorySize, value, address);
+}
+
+void Process::writeToMemory(string varNameToWriteTo, uint16_t value) const
+{
+	std::lock_guard<std::mutex> symLock(varAccess);
+	memoryManager->writeValueToVariable(this->getPID(), this->memorySize, value, varNameToWriteTo);
 }
 
 string Process::getName() const {
@@ -158,7 +184,7 @@ void Process::generateCommands() {
 	// Helper lambda that contains the original randomization logic for basic commands
 	auto generateSingleCommand = [&]() -> shared_ptr<ICommand> {
 		// NOTE: BY DEFAULT, PRINT VARIABLE IS NOT INCLUDED IN THE RANDOMIZATION
-		int randomizedCommand = rand() % 4; // Randomly choose a command type
+		int randomizedCommand = rand() % 6; // Randomly choose a command type
 
 		switch (randomizedCommand)
 		{
@@ -256,12 +282,20 @@ void Process::generateCommands() {
 				}
 				break;
 			}
-			case 4: // Sleep command
+			case 4: // Write Command
+			{
+				return make_shared<WriteCommand>(pid, "0x00", 39, this);
+			}
+			case 5: // Read Command
+			{
+				return make_shared<ReadCommand>(pid, "readVar", "0x00", this);
+			}
+			case 6: // Sleep command
 			{
 				return make_shared<SleepCommand>(pid, rand() % 256, this);
 				break;
 			}
-			case 5: // Print command for variable value
+			case 7: // Print command for variable value
 			{
 				int numberOfVariations = 1;
 				if (isResultDeclared) // If result variable is declared, print it
@@ -315,7 +349,7 @@ void Process::generateCommands() {
 
 		while (localGenerated < maxCommands) {
 			int remaining = maxCommands - localGenerated;
-			int commandChoice = rand() % 7;
+			int commandChoice = rand() % 8;
 
 			// Handle loop case (if allowed by depth and remaining commands)
 			if (commandChoice == 6 && currentDepth < MAX_NEST_LEVEL && remaining > 1) {
@@ -404,5 +438,4 @@ void Process::setRandomizedMemSize(uint32_t minMemorySize, uint32_t maxMemorySiz
 	uniform_int_distribution<size_t> dist(0, powersOfTwos.size() - 1);
 
 	memorySize = powersOfTwos[dist(gen)];
-	
 }

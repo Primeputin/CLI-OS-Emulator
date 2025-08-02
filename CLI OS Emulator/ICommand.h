@@ -13,8 +13,9 @@ class ICommand
 			ADD,
 			SUBTRACT,
 			SLEEP,
-			FORLOOP
-
+			FORLOOP,
+			READ,
+			WRITE
 		};
 
 		ICommand(int pid, CommandType commandType);

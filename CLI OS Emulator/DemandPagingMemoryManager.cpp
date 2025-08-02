@@ -7,7 +7,7 @@ DemandPagingMemoryManager::DemandPagingMemoryManager(uint32_t maxOverallMemory, 
 	this->backingStorePath = backingStorePath;
     memoryMap.resize(maxPhysicalPages);
     for (uint32_t i = 0; i < maxPhysicalPages; i++) {
-        memoryMap[i] = Frame{-1, vector<int16_t>(this->memoryPerFrame, -1)};
+        memoryMap[i] = Frame{-1, vector<uint8_t>(this->memoryPerFrame, 0)};
     }
     std::filesystem::remove(backingStorePath);
     this->backingStorePath = backingStorePath;
@@ -20,8 +20,13 @@ bool DemandPagingMemoryManager::allocate(shared_ptr<Process> process)
 	
     for (uint32_t i = 0; i < process->getNPages(); i++)
     {
-	    backStoreFrame(process->getPID(), i, Frame(-1, vector<int16_t>(this->memoryPerFrame, -1))); // Initialize the backing store for this process
+		if (i >= maxPhysicalPages) {
+			throw std::runtime_error("Not enough physical pages available for the process");
+		}
+		pageTables[process->getPID()][i] = PageTableEntry{ -1, false }; // Initialize the page table entry for this process
+	    backStoreFrame(process->getPID(), i, Frame(-1, vector<uint8_t>(this->memoryPerFrame, 0))); // Initialize the backing store for this process
     }
+
     return true;
 }
 
@@ -106,6 +111,102 @@ uint32_t DemandPagingMemoryManager::memoryUsagePercentage(uint32_t memoryUsage)
     return memoryUsage * 100.0 / this->maxOverAllMemory;
 }
 
+void DemandPagingMemoryManager::loadAddress(int pid, uint32_t memorySize, uint16_t address)
+{
+    if (address >= memorySize || address < 0)
+    {
+        throw std::runtime_error("Invalid address");
+    }
+
+    if (pageTables.find(pid) == pageTables.end() || pageTables[pid].empty())
+    {
+        throw std::runtime_error("Process not allocated or no pages found");
+    }
+    int16_t virtualPage = address / memoryPerFrame;
+    if (!pageTables[pid][virtualPage].valid)
+    {
+        pageIn(pid, virtualPage);
+    }
+    updateLRU(pid, virtualPage);
+}
+
+uint16_t DemandPagingMemoryManager::getValueFromAddressToVariable(int pid, uint32_t memorySize, string varName)
+{
+	if (symbolTables.find(pid) == symbolTables.end() || symbolTables[pid].empty())
+	{
+		throw std::runtime_error("No variables found for this process");
+	}
+	getValueFromAddress(pid, memorySize, symbolTables[pid][varName].virtualAddress);
+}
+
+uint16_t DemandPagingMemoryManager::getValueFromAddress(int pid, uint32_t memorySize, uint16_t address)
+{
+	std::lock_guard<std::mutex> lock(memoryLock);
+       
+    try {
+        
+		loadAddress(pid, memorySize, address);
+        uint16_t nextAddress = address + 1;
+		loadAddress(pid, memorySize, nextAddress);
+
+        auto offset = address % memoryPerFrame;
+		auto offsetOfNextAddress = nextAddress % memoryPerFrame;
+
+        auto physicalPage = pageTables[pid][address / memoryPerFrame].physicalPage;
+		auto physicalPageOfNextAddress = pageTables[pid][nextAddress / memoryPerFrame].physicalPage;
+        uint8_t firstByte = memoryMap[physicalPage].values[offset];
+        uint8_t secondByte = memoryMap[physicalPageOfNextAddress].values[offsetOfNextAddress];
+        
+		uint16_t value = into2Bytes(firstByte, secondByte);
+
+        return value;
+    }
+    catch (const std::runtime_error& e){
+
+        return 0;
+    }
+
+    return 0;
+
+}
+
+void DemandPagingMemoryManager::writeValueToVariable(int pid, uint32_t memorySize, uint16_t value, string varName)
+{
+    if (symbolTables.find(pid) == symbolTables.end() || symbolTables[pid].empty())
+    {
+        throw std::runtime_error("No variables found for this process");
+    }
+    writeValueToMemory(pid, memorySize, value, symbolTables[pid][varName].virtualAddress);
+}
+
+void DemandPagingMemoryManager::writeValueToMemory(int pid, uint32_t memorySize, uint16_t value, uint16_t address)
+{
+	std::lock_guard<std::mutex> lock(memoryLock);
+
+    try {
+		loadAddress(pid, memorySize, address);
+
+        uint16_t nextAddress = address + 1;
+        uint8_t firstByte = value & 0xFF;
+        uint8_t secondByte = (value >> 8) & 0xFF;
+
+		loadAddress(pid, memorySize, nextAddress);
+
+        auto offset = address % memoryPerFrame;
+        auto offsetOfNextAddress = nextAddress % memoryPerFrame;
+
+        auto physicalPage = pageTables[pid][address / memoryPerFrame].physicalPage;
+        auto physicalPageOfNextAddress = pageTables[pid][nextAddress / memoryPerFrame].physicalPage;
+
+        memoryMap[physicalPage].values[offset] = firstByte;
+        memoryMap[physicalPageOfNextAddress].values[offsetOfNextAddress] = secondByte;
+	}
+    catch (const std::out_of_range& e) {
+        throw std::runtime_error("Memory access out of range");
+    }
+}
+
+
 void DemandPagingMemoryManager::loadVariable(int pid, const std::string& varName, uint16_t value)
 {
 	std::lock_guard<std::mutex> lock(memoryLock);
@@ -132,7 +233,7 @@ void DemandPagingMemoryManager::loadVariable(int pid, const std::string& varName
 	}
 
 	updateLRU(pid, pageToBePlaced);
-	auto offset = symbolTables[pid][varName].virtualAddress;
+	auto offset = symbolTables[pid][varName].virtualAddress % memoryPerFrame; 
 	uint8_t firstByte = value & 0xFF;
 	uint8_t secondByte = (value >> 8) & 0xFF;
     auto physicalPage = pageTables[pid][pageToBePlaced].physicalPage;
@@ -140,7 +241,7 @@ void DemandPagingMemoryManager::loadVariable(int pid, const std::string& varName
 	memoryMap[physicalPage].values[offset + 1] = secondByte;
 }
 
-int16_t DemandPagingMemoryManager::accessVariable(int pid, const std::string& varName)
+uint16_t DemandPagingMemoryManager::accessVariable(int pid, const std::string& varName)
 {
     std::lock_guard<std::mutex> lock(memoryLock);
     int16_t virtualPage = -1;
@@ -153,14 +254,14 @@ int16_t DemandPagingMemoryManager::accessVariable(int pid, const std::string& va
             pageIn(pid, virtualPage);
         }
         updateLRU(pid, virtualPage);
-        auto offset = symbolTables[pid][varName].virtualAddress; 
+        auto offset = symbolTables[pid][varName].virtualAddress % memoryPerFrame;
         auto physicalPage = pageTables[pid][virtualPage].physicalPage;
         uint8_t firstByte = memoryMap[physicalPage].values[offset];
         uint8_t secondByte = memoryMap[physicalPage].values[offset + 1];
         return into2Bytes(firstByte, secondByte);	
         
     }
-    return -1;
+    return 0;
     
 }
 
@@ -175,7 +276,7 @@ void DemandPagingMemoryManager::backStoreFrame(int pid, int virtualPage, const F
     out << "# PID: " << pid << " PAGE: " << virtualPage << "\n";
     
     for (uint32_t i = 0; i < frame.values.size(); ++i) {
-        out << frame.values[i];
+        out << static_cast<int16_t>(frame.values[i]);
         if (i != frame.values.size() - 1) out << "\n";
     }
     
@@ -217,14 +318,8 @@ DemandPagingMemoryManager::Frame DemandPagingMemoryManager::loadFrameFromBacking
         }
         else if (inTargetBlock && result.values.size() < memoryPerFrame)
         {
-    
             int value = std::stoi(line);
-            if (value == -1) {
-                result.values.push_back(-1);
-            }
-            else {
-                result.values.push_back(static_cast<uint8_t>(value));
-            }
+            result.values.push_back(value);
         }
         else {
             newFileContent << line << "\n";

@@ -16,7 +16,7 @@ class DemandPagingMemoryManager : public MemoryManager
 {
 	struct Frame {
 		int pid = -1; // Process ID that owns this frame
-		vector<int16_t> values; // supposed to be 8 bytes but just made it int16_t to mark -1 as not occupied
+		vector<uint8_t> values; // supposed to be 8 bytes but just made it int16_t to mark -1 as not occupied
 	};
 
 	struct PageTableEntry {
@@ -39,8 +39,14 @@ class DemandPagingMemoryManager : public MemoryManager
 		uint32_t memoryUsage(int pid);
 		uint32_t memoryUsagePercentage(uint32_t memoryUsage);
 
+		void loadAddress(int pid, uint32_t memorySize, uint16_t address);
+		uint16_t getValueFromAddressToVariable(int pid, uint32_t memorySize, string varName);
+		uint16_t getValueFromAddress(int pid, uint32_t memorySize, uint16_t address);
+		void writeValueToVariable(int pid, uint32_t memorySize, uint16_t value, string varName);
+		void writeValueToMemory(int pid, uint32_t memorySize, uint16_t value, uint16_t address);
+
 		void loadVariable(int pid, const std::string& varName, uint16_t value);
-		int16_t accessVariable(int pid, const std::string& varName);
+		uint16_t accessVariable(int pid, const std::string& varName);
 		void backStoreFrame(int pid, int virtualPage, const Frame& frame);
 		Frame loadFrameFromBackingStore(int pid, int virtualPage);
 	private:

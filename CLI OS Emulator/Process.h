@@ -40,7 +40,9 @@ public:
 	bool isSleeping() const;
 
 	void readVariable(const std::string varName, uint16_t address) const;
+	void readVariable(const std::string varName, string varNameToBeReadFrom) const;
 	void writeToMemory(uint16_t address, uint16_t value) const;
+	void writeToMemory(string varNameToWriteTo, uint16_t value) const;
 
 	string getName() const;
 	uint64_t getCurrentLine() const;

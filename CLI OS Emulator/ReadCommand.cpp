@@ -10,13 +10,23 @@ ReadCommand::ReadCommand(int pid, const std::string varName, std::string address
 void ReadCommand::execute() {
 	if (process != nullptr) {
 
-		string hex = address.substr(2, 4);
+		if (address.substr(0, 2) == "0x") 
+		{
+			string hex = address.substr(2, 4);
 
-		uint16_t addressValue = std::stoi(hex , nullptr, 16);
+			uint16_t addressValue = std::stoi(hex, nullptr, 16);
 
-		cout << "[READ DEBUG] Hex: " << hex << " | Decimal: " << addressValue << endl;
+			cout << "[READ DEBUG] Hex: " << hex << " | Decimal: " << addressValue << endl;
+			process->readVariable(varName, addressValue); // Read the variable from the process's memory
 
-		process->readVariable(varName, addressValue); // Read the variable from the process's memory
+			
+		}
+		else
+		{
+			process->readVariable(varName, address); 
+		}
+
+		
 	}
 }
 

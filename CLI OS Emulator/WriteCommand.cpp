@@ -10,10 +10,17 @@ WriteCommand::WriteCommand(int pid, std::string address, uint16_t value, Process
 
 void WriteCommand::execute() {
 	if (process != nullptr) {
-		std::string hex = address.substr(2, 4);
-		uint16_t addressValue = std::stoi(hex, nullptr, 16);
-		
-		process->writeToMemory(addressValue, value); 
+		if (address.substr(0, 2) == "0x")
+		{
+			std::string hex = address.substr(2, 4);
+			uint16_t addressValue = std::stoi(hex, nullptr, 16);
+			// TODO: check if the address parameter is a literal address or variable name
+			process->writeToMemory(addressValue, value); 
+		}
+		else
+		{
+			process->writeToMemory(address, value); 
+		}
 	}
 }
 

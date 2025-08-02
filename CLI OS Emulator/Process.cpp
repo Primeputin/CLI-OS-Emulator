@@ -16,6 +16,7 @@
 #include "SleepCommand.h"
 #include "DemandPagingMemoryManager.h"
 #include "ReadCommand.h"
+#include "WriteCommand.h"
 
 Process::Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrameSize, uint32_t minMemorySize, uint32_t maxMemorySize, DemandPagingMemoryManager* memoryManager)
 {
@@ -32,17 +33,17 @@ Process::Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrame
 	}
 
 
-	/*string vars[] = { "x", "text", "y" };
-	uint16_t values[] = { 65534, 420};*/
+	string vars[] = { "x", "text", "y" };
+	uint16_t values[] = { 256, 1 };
 
 
-	/*commandList.push_back(std::make_shared<DeclareCommand>(pid, vars[0], values[0], this));
-	commandList.push_back(std::make_shared<DeclareCommand>(pid, vars[1], values[1], this));
-	commandList.push_back(std::make_shared<ReadCommand>(pid, vars[2], "0x0000", this));
-	commandList.push_back(std::make_shared<ReadCommand>(pid, vars[2], "0x0001", this));*/
+	commandList.push_back(std::make_shared<DeclareCommand>(pid, vars[0], values[1], this));
+	commandList.push_back(make_shared<WriteCommand>(pid, "0x4", 69, this));
+	commandList.push_back(std::make_shared<ReadCommand>(pid, vars[0], "0x4", this));
+	// commandList.push_back(std::make_shared<ReadCommand>(pid, vars[2], "0x0001", this));
 
 	
-	//generateCommands();
+	// generateCommands();
 }
 
 int Process::getPID() const
@@ -127,7 +128,7 @@ bool Process::isSleeping() const
 void Process::readVariable(const std::string varName, uint16_t address) const
 {
 	std::lock_guard<std::mutex> symLock(varAccess);
-	uint16_t val = memoryManager->getValueFromAddress(address); // This will throw an exception if the variable is not found
+	uint16_t val = memoryManager->getValueFromAddress(this->getPID(), this->memorySize, address); // This will throw an exception if the variable is not found
 	
 	cout << "[READ DEBUG] Value: " << val << endl;
 	
@@ -136,10 +137,28 @@ void Process::readVariable(const std::string varName, uint16_t address) const
 	cout << "[READ DEBUG] Variable " << varName << ": " << (uint16_t)memoryManager->accessVariable(pid, varName) << endl;
 }
 
+void Process::readVariable(const std::string varName, string varNameToBeReadFrom) const
+{
+	std::lock_guard<std::mutex> symLock(varAccess);
+	uint16_t val = memoryManager->getValueFromAddressToVariable(this->getPID(), this->memorySize, varNameToBeReadFrom); // This will throw an exception if the variable is not found
+
+	cout << "[READ DEBUG] Value: " << val << endl;
+
+	memoryManager->loadVariable(pid, varName, val); // Load the variable into the process's memory
+
+	cout << "[READ DEBUG] Variable " << varName << ": " << (uint16_t)memoryManager->accessVariable(pid, varName) << endl;
+}
+
 void Process::writeToMemory(uint16_t address, uint16_t value) const
 {
 	std::lock_guard<std::mutex> symLock(varAccess);
-	memoryManager->writeValueToMemory(value, address); 
+	memoryManager->writeValueToMemory(this->getPID(), this->memorySize, value, address);
+}
+
+void Process::writeToMemory(string varNameToWriteTo, uint16_t value) const
+{
+	std::lock_guard<std::mutex> symLock(varAccess);
+	memoryManager->writeValueToVariable(this->getPID(), this->memorySize, value, varNameToWriteTo);
 }
 
 string Process::getName() const {

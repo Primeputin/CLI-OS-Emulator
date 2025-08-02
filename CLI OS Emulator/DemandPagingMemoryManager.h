@@ -36,6 +36,7 @@ class DemandPagingMemoryManager : public MemoryManager
 		void visualizeMemory(uint64_t currentCycle) override;
 		bool isProcessAllocated(std::shared_ptr<Process> process) override;
 		void printMemoryStats(uint64_t activeTicks , uint64_t idleTicks);
+		uint32_t memoryUsage();
 		uint32_t memoryUsage(int pid);
 		uint32_t memoryUsagePercentage(uint32_t memoryUsage);
 

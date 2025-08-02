@@ -321,6 +321,46 @@ void Scheduler::vmstat()
 	this->memoryManager->printMemoryStats(activeTicks, idleTicks);
 }
 
+void Scheduler::processSmi()
+{
+	std::lock_guard<std::mutex> rLock(runningMutex);
+	cout << "-------------------------------------------------" << endl;
+	cout << "| PROCESS-SMI                                    |" << endl;
+	cout << "-------------------------------------------------" << endl;
+	auto runningCores = runningProcesses.size();
+	cout << "CPU Utilization: " << (runningCores * 100) / numberOfCores << "%\n";
+	uint32_t memoryUsed = 0;
+
+	for (const auto& process : runningProcesses) 
+	{
+		memoryUsed += this->memoryManager->memoryUsage(process->getPID());
+	}
+	cout << "Memory Usage: " << memoryUsed << endl;
+
+	cout << "Memory Utilized: " << this->memoryManager->memoryUsagePercentage(memoryUsed) << "%" << endl;
+	cout << "==================================================" << endl;
+	cout << "Running Processes and memory usage: " << endl;
+	cout << "-------------------------------------------------" << endl;
+	for (const auto& process : runningProcesses) {
+		uint64_t currentInstruction = process->getCurrentLine();
+		uint64_t totalInstructions = process->getTotalLines();
+		int CPUCoreID = process->getCPUCoreID();
+		std::string processName = process->getName();
+		int pid = process->getPID();
+		time_t createdTime = process->getCreatedTime();
+		tm now;
+		localtime_s(&now, &createdTime);
+		cout << std::left << std::setw(12) << processName
+			<< " (" << std::put_time(&now, "%m/%d/%Y %I:%M:%S%p") << ")    "
+			<< std::setw(6) << "Core:" << std::setw(0) << CPUCoreID << "   "
+			<< currentInstruction << "/" << totalInstructions
+			<< " PID: " << pid << endl;
+
+		printMemoryUsage(pid);
+	}
+	cout << "-------------------------------------------------" << endl;
+}
+
 void Scheduler::printMemoryUsage(int pid)
 {
 	auto memoryUsed = this->memoryManager->memoryUsage(pid);

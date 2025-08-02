@@ -91,6 +91,24 @@ void DemandPagingMemoryManager::printMemoryStats(uint64_t activeTicks, uint64_t 
     cout << "<<------------------------------------------------->>" << endl;
 }
 
+// not being used rn
+// this also includes memory used by processes not running currently
+uint32_t DemandPagingMemoryManager::memoryUsage()
+{
+    std::lock_guard<std::mutex> lock(memoryLock);
+
+    uint32_t usedMemory = 0;
+	for (const auto& pid : pageTables) {
+		for (const auto& entry : pid.second) {
+			if (entry.second.valid) {
+				usedMemory += memoryPerFrame; // Each valid page contributes memoryPerFrame bytes
+			}
+		}
+	}
+
+    return usedMemory;
+}
+
 uint32_t DemandPagingMemoryManager::memoryUsage(int pid)
 {
 	std::lock_guard<std::mutex> lock(memoryLock);

@@ -40,6 +40,7 @@ class Scheduler
 		void rr();
 		void printProcessesStatus(std::ostream& out);
 		void vmstat();
+		void processSmi();
 		void printMemoryUsage(int pid);
 		uint64_t getTotalCycles();
 		uint64_t getTotalProcesses();

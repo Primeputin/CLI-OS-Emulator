@@ -27,6 +27,8 @@ class MainConsole : public Console
 
 		void vmstat(string command);
 
+        void processSmi(string command);
+
         virtual void processCommand(string command) override; 
 
         virtual void getCommand() override;

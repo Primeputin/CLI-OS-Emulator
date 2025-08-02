@@ -41,6 +41,7 @@ class ConsoleManager
 		void stopScheduler();
 		void listProcesses(bool outToFile);
 		void vmstat();
+		void processSmi();
 		void printMemoryUsage(int pid);
 
 		bool isSchedulerInitialized();

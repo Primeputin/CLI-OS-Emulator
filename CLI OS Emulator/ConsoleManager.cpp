@@ -226,6 +226,16 @@ void ConsoleManager::vmstat()
 	}
 }
 
+void ConsoleManager::processSmi()
+{
+	if (scheduler) {
+		scheduler->processSmi();
+	}
+	else {
+		cerr << "Scheduler is not initialized." << endl;
+	}
+}
+
 void ConsoleManager::printMemoryUsage(int pid)
 {
 	if (scheduler) {

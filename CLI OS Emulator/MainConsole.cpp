@@ -84,6 +84,12 @@ void MainConsole::vmstat(string command)
     ConsoleManager::getInstance()->vmstat();
 }
 
+void MainConsole::processSmi(string command)
+{
+    recognizedCommand(command);
+	ConsoleManager::getInstance()->processSmi();
+}
+
 void MainConsole::processCommand (string command)
 {
     vector<string> texts = getSpacedTexts(command);
@@ -128,6 +134,10 @@ void MainConsole::processCommand (string command)
         else if (command == "vmstat")
         {
             vmstat(command);
+        }
+        else if (command == "process-smi")
+        {
+			processSmi(command);
         }
         else if (command == "exit")
         {

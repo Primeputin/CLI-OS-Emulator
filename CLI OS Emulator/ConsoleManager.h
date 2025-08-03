@@ -28,6 +28,8 @@ class ConsoleManager
 		static void initialize();
 		static void destroy();
 		void createProcess(string name, uint16_t memorySize);
+		void createConfiguredProcess(string name, uint16_t memorySize, Process::CommandList commandList);
+
 		void destroyProcess(string name);
 		void switchToMain();
 		void switchToProcessConsole(string name);

@@ -33,7 +33,7 @@ class Scheduler
 		void checkProcessesToBeRemovedFromRunning();
 		void generateProcesses();
 		void stopGenerationOfProcesses();
-		shared_ptr<Console> generateRandomProcess(string name, bool randomizedMemorySize, uint16_t memorySize = 64);
+		shared_ptr<Console> generateRandomProcess(string name, bool randomizedMemorySize, uint16_t memorySize = 64, Process::CommandList commandList = {});
 		void run();
 		void stop();
 		void fcfs();

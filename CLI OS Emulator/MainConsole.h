@@ -29,6 +29,18 @@ class MainConsole : public Console
 
         void processSmi(string command);
 
+        void createConfiguredProcess(string name, uint16_t memorySize, string command);
+
+        Process::CommandList addInstructions(string instructions);
+
+        void parseProcessInstruction(string command, Process::CommandList commandList);
+
+        vector<string> getInstructionParameters(string instruction, vector<char> groupingSymbol);
+
+        vector<string> tokenize(string str, char delimiter);
+
+        vector<string> parseInstructions(string instructions);
+
         virtual void processCommand(string command) override; 
 
         virtual void getCommand() override;

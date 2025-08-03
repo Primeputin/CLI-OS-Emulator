@@ -44,6 +44,8 @@ public:
 	void writeToMemory(uint16_t address, uint16_t value) const;
 	void writeToMemory(string varNameToWriteTo, uint16_t value) const;
 
+	void executeInstructions(string instructions);
+
 	string getName() const;
 	uint64_t getCurrentLine() const;
 	uint64_t getTotalLines() const;
@@ -61,6 +63,7 @@ public:
 	uint32_t getNPages();
 	void setRandomizedMemSize(uint32_t minMemorySize, uint32_t maxMemorySize);
 
+
 private:
 	int pid = -1;
 	string name;
@@ -76,6 +79,12 @@ private:
 	mutable std::mutex mtx; // Mutex for thread safety when accessing process state and commands
 	mutable std::mutex varAccess; // Mutex for symbol table access
 	void generateCommands();
+
+	vector<string> parseInstructions(string instructions);
+	void callInstruction(string command);
+	vector<string> tokenize(string str, char delimiter);
+	vector<string> getInstructionParameters(string instruction, vector<char> groupingSymbol);
+
 	std::vector<std::string> logs;
 	mutable std::mutex logMutex;
 	uint32_t memorySize;

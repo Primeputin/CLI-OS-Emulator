@@ -7,6 +7,7 @@
 #include <functional>
 #include <vector>
 #include <cmath>
+#include <sstream>
 #include <random>
 #include "PrintCommand.h"
 #include "PrintVariableCommand.h"
@@ -139,6 +140,27 @@ void Process::writeToMemory(string varNameToWriteTo, uint16_t value) const
 	memoryManager->writeValueToVariable(this->getPID(), this->memorySize, value, varNameToWriteTo);
 }
 
+void Process::executeInstructions(string instructions) {
+	lock_guard<mutex> lock(mtx);
+	if (instructions.empty()) {
+		cout << "No instructions provided." << endl;
+		return;
+	}
+
+	vector<string> parsedInstructions = parseInstructions(instructions);
+
+	if(parsedInstructions.empty()) {
+		return;
+	}
+	else {
+		for (int i = 0; i < parsedInstructions.size(); i++) {
+			callInstruction(parsedInstructions[i]);
+		}
+	}
+}
+
+
+
 string Process::getName() const {
     return name;
 }
@@ -173,6 +195,121 @@ void Process::clearSymbolTable()
 {
 	memoryManager->deallocate(pid);
 
+}
+
+void Process::callInstruction(string command) 
+{
+	vector<string> texts = getInstructionParameters(command, { '(', ')' });
+
+	if (texts[0] == "DECLARE") {
+		
+		make_shared<DeclareCommand>(pid, texts[1], stoi(texts[2]), this)->execute();
+	} 
+	else if (texts[0] == "PRINT") {
+
+		//TODO
+
+		if (texts.size() == 2) {
+			make_shared<PrintCommand>(pid, texts[1], this);
+		} else {
+			cerr << "Error: Invalid PRINT command syntax." << endl;
+		}
+	} 
+	else if (texts[0] == "ADD") {
+		if (texts.size() == 4) {
+			make_shared<AddCommand>(pid, texts[1], texts[2], texts[3], this)->execute();
+		} else {
+			cerr << "Error: Invalid ADD command syntax." << endl;
+		}
+	} 
+	else if (texts[0] == "SUBTRACT") {
+		if (texts.size() == 4) {
+			make_shared<SubtractCommand>(pid, texts[1], texts[2], texts[3], this)->execute();
+		} else {
+			cerr << "Error: Invalid SUBTRACT command syntax." << endl;
+		}
+	} 
+	else if (texts[0] == "SLEEP") {
+		if (texts.size() == 2) {
+			make_shared<SleepCommand>(pid, stoi(texts[1]), this)->execute();
+		} else {
+			cerr << "Error: Invalid SLEEP command syntax." << endl;
+		}
+	} 
+	else if (texts[0] == "READ") {
+		if (texts.size() == 3) {
+			make_shared<ReadCommand>(pid, texts[1], texts[2], this)->execute();
+		} else {
+			cerr << "Error: Invalid READ command syntax." << endl;
+		}
+	} 
+	else if (texts[0] == "WRITE") {
+		if (texts.size() == 3) {
+			make_shared<WriteCommand>(pid, texts[1], stoi(texts[2]), this)->execute();
+		} else {
+			cerr << "Error: Invalid WRITE command syntax." << endl;
+		}
+	} 
+	else if (texts[0] == "FOR") {
+		
+		vector<string> loopParts = getInstructionParameters(texts[1], { '[', ']'});
+
+		for (int i = 0; i < stoi(texts[2]); i++) {
+			for (size_t j = 2; j < texts.size(); j++) {
+				callInstruction(texts[j]);
+			}
+		}
+	}
+	else {
+		cerr << "Error: Unknown command '" << texts[0] << "'." << endl;
+	}
+}
+
+vector<string> Process::tokenize(string str, char delimiter) {
+	vector<string> tokens;
+	stringstream ss(str);
+	string token;
+	while (getline(ss, token, delimiter)) {
+		if (!token.empty()) {
+			tokens.push_back(token);
+		}
+	}
+	return tokens;
+}
+
+vector<string> Process::getInstructionParameters(string instruction, vector<char> groupingSymbol) {
+
+	vector<string> parts;
+	string command = instruction.substr(0, instruction.find(groupingSymbol[0]));
+	string parameters = instruction.substr(instruction.find(groupingSymbol[0]) + 1, instruction.find(groupingSymbol[1]));
+	vector<string> tokenizedParameters = tokenize(parameters, ' ');
+
+
+	parts.push_back(command); // Add the command itself
+	for (string param : tokenizedParameters) {
+		if (!param.empty()) {
+			param = param.substr(0, param.find(','));
+			parts.push_back(param); // Add each parameter
+		}
+	}
+
+	return parts;
+}
+
+vector<string> Process::parseInstructions(string instructions) {
+	
+	char delimiter = ';';
+
+	long count = std::count(instructions.begin(), instructions.end(), delimiter);
+
+	vector<string> parsedInstructions = tokenize(instructions, delimiter);
+
+	if(parsedInstructions.size() != count) {
+		cerr << "Error: Syntax Error." << endl;
+		return {};
+	}
+
+	return parsedInstructions;
 }
 
 void Process::generateCommands() {

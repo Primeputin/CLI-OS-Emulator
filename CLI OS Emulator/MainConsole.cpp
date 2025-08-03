@@ -130,19 +130,31 @@ Process::CommandList MainConsole::addInstructions(string instructions) {
 void MainConsole::parseProcessInstruction(string command, Process::CommandList& commandList)
 {
     vector<string> texts = getInstructionParameters(command, { '(', ')' });
-	for (size_t i = 0; i < texts.size(); i++) {
+
+	/*for (size_t i = 0; i < texts.size(); i++) {
         cout << texts[i] << endl;
-	}
+	}*/
+
+	cout << "[DEBUG] Parsing command: " << texts[0] << texts[1] << endl;
+
     if (texts[0] == "DECLARE") {
         commandList.push_back(make_shared<DeclareCommand>(-1, texts[1], stoi(texts[2]), nullptr));
     }
     else if (texts[0] == "PRINT") {
 
         if (texts.size() == 2) {
-            commandList.push_back(make_shared<PrintCommand>(-1, texts[1], nullptr));
+            if (texts[1] == "\"") {
+                cout << texts[0] << " " << texts[1] << endl;
+				string text = texts[1].substr(1, texts[1].length() - 2);
+                commandList.push_back(make_shared<PrintCommand>(-1, text, nullptr));
+            }
+            else {
+                commandList.push_back(make_shared<PrintVariableCommand>(-1, "", texts[2], nullptr));
+            }
         }
-        if (texts.size() == 3) {
-            commandList.push_back(make_shared<PrintVariableCommand>(-1, texts[1], texts[2], nullptr));
+        else if (texts.size() == 3) {
+            string text = texts[1].substr(1, texts[1].length() - 2);
+            commandList.push_back(make_shared<PrintVariableCommand>(-1, text, texts[2], nullptr));
         }
         else {
             cerr << "Error: Invalid PRINT command syntax." << endl;
@@ -250,6 +262,10 @@ vector<string> MainConsole::parseInstructions(string instructions) {
 
     vector<string> parsedInstructions = tokenize(instructions, delimiter);
 
+	cout << "[DEBUG] Parsed instructions count: " << count << " | " << parsedInstructions.size() << endl;
+
+	cout << "[DEBUG] Parsed instructions: " << parsedInstructions[0] << parsedInstructions[0] << endl;
+
     if (parsedInstructions.size() != count) {
         cerr << "Error: Syntax Error." << endl;
         return {};
@@ -270,7 +286,6 @@ void MainConsole::processCommand (string command)
     if (std::regex_search(command, match, re)) {
         instructions = match[1].str();
     }
-
 
     if (!ConsoleManager::getInstance()->isSchedulerInitialized())
     {
@@ -300,7 +315,6 @@ void MainConsole::processCommand (string command)
             recognizedCommand(command);
             createConfiguredProcess(texts[2], val, instructions);
         }
-
     }
     else if (texts.size() == 1)
     {

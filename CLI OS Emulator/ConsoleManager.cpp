@@ -70,7 +70,7 @@ void ConsoleManager::createConfiguredProcess(string name, uint16_t memorySize, P
 	if (newConsole)
 	{
 		cout << "Screen name: " << name << " created successfully." << std::endl;
-		switchToProcessConsole(newConsole->getName());
+		//switchToProcessConsole(newConsole->getName());
 	}
 }
 

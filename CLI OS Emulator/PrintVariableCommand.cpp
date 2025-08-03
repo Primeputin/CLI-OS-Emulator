@@ -12,8 +12,17 @@ PrintVariableCommand::PrintVariableCommand(int pid, string text, std::string var
 
 void PrintVariableCommand::execute() {
     uint16_t value;
+
     process->getVariableValue(varName, value);
-    cout << text << value << std::endl;
+
+    if (text == "") {   
+        cout << value << std::endl;
+    }
+    else {
+		cout << text << value << endl;
+    }
+
+    
 }
 
 void PrintVariableCommand::logExecute(int cpuCoreID, std::string fileName) {

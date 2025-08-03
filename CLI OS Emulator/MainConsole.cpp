@@ -127,7 +127,7 @@ Process::CommandList MainConsole::addInstructions(string instructions) {
     return commandList;
 }
 
-void MainConsole::parseProcessInstruction(string command, Process::CommandList commandList)
+void MainConsole::parseProcessInstruction(string command, Process::CommandList& commandList)
 {
     vector<string> texts = getInstructionParameters(command, { '(', ')' });
 	for (size_t i = 0; i < texts.size(); i++) {

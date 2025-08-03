@@ -33,7 +33,7 @@ class MainConsole : public Console
 
         Process::CommandList addInstructions(string instructions);
 
-        void parseProcessInstruction(string command, Process::CommandList commandList);
+        void parseProcessInstruction(string command, Process::CommandList& commandList);
 
         vector<string> getInstructionParameters(string instruction, vector<char> groupingSymbol);
 

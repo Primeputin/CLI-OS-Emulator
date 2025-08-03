@@ -37,6 +37,7 @@ Process::Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrame
 
 Process::Process(int pid, string name, uint32_t memoryFrameSize, uint32_t minMemorySize, uint32_t maxMemorySize, std::vector<std::shared_ptr<ICommand>> CommandList, DemandPagingMemoryManager* memoryManager)
 {
+	cout << "hi" << endl;
 	this->pid = pid;
 	this->name = name;
 	this->createdTime = time(nullptr);

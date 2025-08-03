@@ -218,7 +218,15 @@ vector<string> MainConsole::getInstructionParameters(string instruction, vector<
 
     vector<string> parts;
     string command = instruction.substr(0, instruction.find(groupingSymbol[0]));
+
+    if(command[0] == ' ') {
+        command = command.substr(1); 
+	}
+
     string parameters = instruction.substr(instruction.find(groupingSymbol[0]) + 1, instruction.find(groupingSymbol[1]));
+    if (parameters.back() == groupingSymbol[1]) {
+        parameters.pop_back(); 
+	}
     vector<string> tokenizedParameters = tokenize(parameters, ' ');
 
 

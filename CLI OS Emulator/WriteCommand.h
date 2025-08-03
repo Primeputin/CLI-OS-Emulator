@@ -6,10 +6,10 @@
 class WriteCommand : public ICommand
 {
 private:
-	uint16_t value;
-	std::string address;
+	string valueToBeWritten;
+	string address;
 public:
-	WriteCommand(int pid, std::string address, uint16_t value, Process* process);
+	WriteCommand(int pid, std::string address, string valueToBeWritten, Process* process);
 	void execute() override;
 	void logExecute(int cpuCoreID, std::string fileName) override;
 };

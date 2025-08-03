@@ -307,7 +307,7 @@ void Process::generateCommands() {
 			}
 			case 4: // Write Command
 			{
-				return make_shared<WriteCommand>(pid, "0x00", 39, this);
+				return make_shared<WriteCommand>(pid, "0x00", "39", this);
 			}
 			case 5: // Read Command
 			{
@@ -334,11 +334,11 @@ void Process::generateCommands() {
 					{
 						int randomizedVariables = rand() % numberOfVariables; // Randomly choose a variable to print
 						string varName = "var_" + to_string(randomizedVariables);
-						return make_shared<PrintVariableCommand>(pid, varName, this);
+						return make_shared<PrintVariableCommand>(pid, "result from " + varName + ": ", varName, this);
 					}
 					else
 					{
-						return make_shared<PrintVariableCommand>(pid, "result_var", this); // Print the result variable
+						return make_shared<PrintVariableCommand>(pid, "result from result_var: ", "result_var", this); // Print the result variable
 					}
 				}
 				else
@@ -350,7 +350,7 @@ void Process::generateCommands() {
 					}
 					else
 					{
-						return make_shared<PrintVariableCommand>(pid, "result_var", this); // Print the result variable
+						return make_shared<PrintVariableCommand>(pid, "result from result_var: ", "result_var", this); // Print the result variable
 					}
 
 				}

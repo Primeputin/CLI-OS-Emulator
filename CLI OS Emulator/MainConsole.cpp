@@ -138,10 +138,11 @@ void MainConsole::parseProcessInstruction(string command, Process::CommandList& 
     }
     else if (texts[0] == "PRINT") {
 
-        //TODO
-
         if (texts.size() == 2) {
             commandList.push_back(make_shared<PrintCommand>(-1, texts[1], nullptr));
+        }
+        if (texts.size() == 3) {
+            commandList.push_back(make_shared<PrintVariableCommand>(-1, texts[1], texts[2], nullptr));
         }
         else {
             cerr << "Error: Invalid PRINT command syntax." << endl;
@@ -181,7 +182,7 @@ void MainConsole::parseProcessInstruction(string command, Process::CommandList& 
     }
     else if (texts[0] == "WRITE") {
         if (texts.size() == 3) {
-            commandList.push_back(make_shared<WriteCommand>(-1, texts[1], stoi(texts[2]), nullptr));
+            commandList.push_back(make_shared<WriteCommand>(-1, texts[1], texts[2], nullptr));
         }
         else {
             cerr << "Error: Invalid WRITE command syntax." << endl;

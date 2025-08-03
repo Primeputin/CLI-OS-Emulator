@@ -43,10 +43,6 @@ void ProcessConsole::processCommand(std::string command) {
             std::cout << "Lines of code: " << process->getTotalLines() << std::endl;
         }
     }
-    else if (texts[0] == "screen" && texts[1] == "-c") {
-	    string instructions = command.substr(7); // Extract the instructions after "screen -c "
-		process->executeInstructions(instructions);
-    }
     else if (!texts.empty()) {
         printOutInvalidCommand(command);
     }

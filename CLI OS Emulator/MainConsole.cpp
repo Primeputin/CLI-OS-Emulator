@@ -184,6 +184,23 @@ void MainConsole::processCommand (string command)
             ConsoleManager::getInstance()->createProcess(texts[2], val);
         }
     }
+    else if (texts.size() == 5 && texts[0] == "screen" && texts[1] == "-c")
+    {
+
+        uint16_t val;
+        if (!parse_uint16_within_range(texts[3], val)) {
+            cout << "A process may contain 2^6 - 2^16 bytes of memory only" << "\n\n";
+        }
+        else
+        {
+            recognizedCommand(command);
+            ConsoleManager::getInstance()->createProcess(texts[2], val);
+			
+
+            /* process->executeInstructions(instructions);     */
+        }
+       
+    }
     else if (texts.size() != 0){
         cout << "You entered: " << command << "\n" << "Command invalid" << "\n\n";
     }

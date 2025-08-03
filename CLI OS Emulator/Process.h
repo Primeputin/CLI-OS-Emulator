@@ -44,7 +44,7 @@ public:
 	void writeToMemory(uint16_t address, uint16_t value) const;
 	void writeToMemory(string varNameToWriteTo, uint16_t value) const;
 
-	void executeInstructions(string instructions);
+	void addInstructions(string instructions);
 
 	string getName() const;
 	uint64_t getCurrentLine() const;
@@ -81,7 +81,9 @@ private:
 	void generateCommands();
 
 	vector<string> parseInstructions(string instructions);
-	void callInstruction(string command);
+
+	void processInstruction(string command);
+
 	vector<string> tokenize(string str, char delimiter);
 	vector<string> getInstructionParameters(string instruction, vector<char> groupingSymbol);
 

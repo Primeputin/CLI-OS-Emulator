@@ -140,7 +140,7 @@ void Process::writeToMemory(string varNameToWriteTo, uint16_t value) const
 	memoryManager->writeValueToVariable(this->getPID(), this->memorySize, value, varNameToWriteTo);
 }
 
-void Process::executeInstructions(string instructions) {
+void Process::addInstructions(string instructions) {
 	lock_guard<mutex> lock(mtx);
 	if (instructions.empty()) {
 		cout << "No instructions provided." << endl;
@@ -154,12 +154,10 @@ void Process::executeInstructions(string instructions) {
 	}
 	else {
 		for (int i = 0; i < parsedInstructions.size(); i++) {
-			callInstruction(parsedInstructions[i]);
+			processInstruction(parsedInstructions[i]);
 		}
 	}
 }
-
-
 
 string Process::getName() const {
     return name;
@@ -197,55 +195,54 @@ void Process::clearSymbolTable()
 
 }
 
-void Process::callInstruction(string command) 
+void Process::processInstruction(string command) 
 {
 	vector<string> texts = getInstructionParameters(command, { '(', ')' });
 
 	if (texts[0] == "DECLARE") {
-		
-		make_shared<DeclareCommand>(pid, texts[1], stoi(texts[2]), this)->execute();
+		commandList.push_back(make_shared<DeclareCommand>(pid, texts[1], stoi(texts[2]), this));
 	} 
 	else if (texts[0] == "PRINT") {
 
 		//TODO
 
 		if (texts.size() == 2) {
-			make_shared<PrintCommand>(pid, texts[1], this);
+			commandList.push_back(make_shared<PrintCommand>(pid, texts[1], this));
 		} else {
 			cerr << "Error: Invalid PRINT command syntax." << endl;
 		}
 	} 
 	else if (texts[0] == "ADD") {
 		if (texts.size() == 4) {
-			make_shared<AddCommand>(pid, texts[1], texts[2], texts[3], this)->execute();
+			commandList.push_back(make_shared<AddCommand>(pid, texts[1], texts[2], texts[3], this));
 		} else {
 			cerr << "Error: Invalid ADD command syntax." << endl;
 		}
 	} 
 	else if (texts[0] == "SUBTRACT") {
 		if (texts.size() == 4) {
-			make_shared<SubtractCommand>(pid, texts[1], texts[2], texts[3], this)->execute();
+			commandList.push_back(make_shared<SubtractCommand>(pid, texts[1], texts[2], texts[3], this));
 		} else {
 			cerr << "Error: Invalid SUBTRACT command syntax." << endl;
 		}
 	} 
 	else if (texts[0] == "SLEEP") {
 		if (texts.size() == 2) {
-			make_shared<SleepCommand>(pid, stoi(texts[1]), this)->execute();
+			commandList.push_back(make_shared<SleepCommand>(pid, stoi(texts[1]), this));
 		} else {
 			cerr << "Error: Invalid SLEEP command syntax." << endl;
 		}
 	} 
 	else if (texts[0] == "READ") {
 		if (texts.size() == 3) {
-			make_shared<ReadCommand>(pid, texts[1], texts[2], this)->execute();
+			commandList.push_back(make_shared<ReadCommand>(pid, texts[1], texts[2], this));
 		} else {
 			cerr << "Error: Invalid READ command syntax." << endl;
 		}
 	} 
 	else if (texts[0] == "WRITE") {
 		if (texts.size() == 3) {
-			make_shared<WriteCommand>(pid, texts[1], stoi(texts[2]), this)->execute();
+			commandList.push_back(make_shared<WriteCommand>(pid, texts[1], stoi(texts[2]), this));
 		} else {
 			cerr << "Error: Invalid WRITE command syntax." << endl;
 		}
@@ -256,7 +253,7 @@ void Process::callInstruction(string command)
 
 		for (int i = 0; i < stoi(texts[2]); i++) {
 			for (size_t j = 2; j < texts.size(); j++) {
-				callInstruction(texts[j]);
+				processInstruction(texts[j]);
 			}
 		}
 	}

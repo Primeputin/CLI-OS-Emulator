@@ -135,7 +135,7 @@ void MainConsole::parseProcessInstruction(string command, Process::CommandList& 
         cout << texts[i] << endl;
 	}*/
 
-	cout << "[DEBUG] Parsing command: " << texts[0] << texts[1] << endl;
+	// cout << "[DEBUG] Parsing command: " << texts[0] << texts[1] << endl;
 
     if (texts[0] == "DECLARE") {
         commandList.push_back(make_shared<DeclareCommand>(-1, texts[1], stoi(texts[2]), nullptr));
@@ -228,30 +228,56 @@ vector<string> MainConsole::tokenize(string str, char delimiter) {
 }
 
 vector<string> MainConsole::getInstructionParameters(string instruction, vector<char> groupingSymbol) {
-
     vector<string> parts;
-    string command = instruction.substr(0, instruction.find(groupingSymbol[0]));
 
-    if(command[0] == ' ') {
-        command = command.substr(1); 
-	}
+    // Extract command
+    size_t startPos = instruction.find(groupingSymbol[0]);
+    size_t endPos = instruction.find_last_of(groupingSymbol[1]);
+    string command = instruction.substr(0, startPos);
+    if (!command.empty() && command[0] == ' ') {
+        command = command.substr(1);
+    }
 
-    string parameters = instruction.substr(instruction.find(groupingSymbol[0]) + 1, instruction.find(groupingSymbol[1]));
-    if (parameters.back() == groupingSymbol[1]) {
-        parameters.pop_back(); 
-	}
-    vector<string> tokenizedParameters = tokenize(parameters, ' ');
+    // Extract everything between ( and )
+    string parameters = instruction.substr(startPos + 1, endPos - startPos - 1);
 
+    // Smart split by commas (ignoring commas inside quotes)
+    vector<string> tokenizedParameters;
+    bool inQuotes = false;
+    string current;
+    for (size_t i = 0; i < parameters.size(); ++i) {
+        char c = parameters[i];
 
-    parts.push_back(command); // Add the command itself
-    for (string param : tokenizedParameters) {
-        if (!param.empty()) {
-            param = param.substr(0, param.find(','));
-            parts.push_back(param); // Add each parameter
+        if (c == '"' && (i == 0 || parameters[i - 1] != '\\')) {
+            inQuotes = !inQuotes;  // toggle quote state
         }
+
+        if (c == ',' && !inQuotes) {
+            size_t s = current.find_first_not_of(" \t");
+            size_t e = current.find_last_not_of(" \t");
+            if (s != string::npos)
+                tokenizedParameters.push_back(unescapeQuotes(current.substr(s, e - s + 1)));
+            current.clear();
+        }
+        else {
+            current += c;
+        }
+    }
+    if (!current.empty()) {
+        size_t s = current.find_first_not_of(" \t");
+        size_t e = current.find_last_not_of(" \t");
+        if (s != string::npos)
+            tokenizedParameters.push_back(unescapeQuotes(current.substr(s, e - s + 1)));
+    }
+
+    // Add command and parameters
+    parts.push_back(command);
+    for (auto& param : tokenizedParameters) {
+        parts.push_back(param);
     }
 
     return parts;
+    
 }
 
 vector<string> MainConsole::parseInstructions(string instructions) {
@@ -262,9 +288,9 @@ vector<string> MainConsole::parseInstructions(string instructions) {
 
     vector<string> parsedInstructions = tokenize(instructions, delimiter);
 
-	cout << "[DEBUG] Parsed instructions count: " << count << " | " << parsedInstructions.size() << endl;
+	//cout << "[DEBUG] Parsed instructions count: " << count << " | " << parsedInstructions.size() << endl;
 
-	cout << "[DEBUG] Parsed instructions: " << parsedInstructions[0] << parsedInstructions[0] << endl;
+	//cout << "[DEBUG] Parsed instructions: " << parsedInstructions[0] << parsedInstructions[0] << endl;
 
     if (parsedInstructions.size() != count) {
         cerr << "Error: Syntax Error." << endl;
@@ -274,18 +300,46 @@ vector<string> MainConsole::parseInstructions(string instructions) {
     return parsedInstructions;
 }
 
+string MainConsole::unescapeQuotes(const string& s) {
+    string result;
+    result.reserve(s.size());
+    for (size_t i = 0; i < s.size(); ++i) {
+        if (s[i] == '\\' && i + 1 < s.size() && s[i + 1] == '"') {
+            result.push_back('"');
+            ++i; // skip the backslash
+        }
+        else {
+            result.push_back(s[i]);
+        }
+    }
+    return result;
+}
+
+string MainConsole::extractQuoted(const std::string& text) {
+    bool inQuotes = false;
+    std::string result;
+
+    for (size_t i = 0; i < text.size(); ++i) {
+        if (text[i] == '"' && (i == 0 || text[i - 1] != '\\')) {
+            if (!inQuotes) {
+                inQuotes = true; // start capturing
+                continue;
+            }
+            else {
+                break; // end capturing
+            }
+        }
+        if (inQuotes) result += text[i];
+    }
+
+    return result;
+}
+
 void MainConsole::processCommand (string command)
 {
     vector<string> texts = getSpacedTexts(command);
-    
-    std::regex re("\"(.*?)\"");  // Match text between first pair of double quotes
-    std::smatch match;
 
-    string instructions = "";
-
-    if (std::regex_search(command, match, re)) {
-        instructions = match[1].str();
-    }
+    string instructions = extractQuoted(command);
 
     if (!ConsoleManager::getInstance()->isSchedulerInitialized())
     {

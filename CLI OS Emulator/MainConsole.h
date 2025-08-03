@@ -41,6 +41,10 @@ class MainConsole : public Console
 
         vector<string> parseInstructions(string instructions);
 
+        string unescapeQuotes(const string& s);
+
+        string extractQuoted(const std::string& text);
+
         virtual void processCommand(string command) override; 
 
         virtual void getCommand() override;

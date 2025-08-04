@@ -124,6 +124,22 @@ void Process::setCPUCoreID(int coreID)
 	this->cpuCoreID = coreID;
 }
 
+void Process::setShutdownAddress(string shutdownHexAdd) {
+	this->shutdownHexAdd = shutdownHexAdd;
+}
+
+void Process::setShutdownTime() {
+	this->shutdownTime = time(nullptr);
+}
+
+string Process::getShutdownAddress() {
+	return this->shutdownHexAdd;
+}
+
+time_t Process::getShutdownTime() {
+	return this->shutdownTime;
+}
+
 void Process::declareVariable(const std::string& varName, uint16_t value)
 {
 	std::lock_guard<std::mutex> symLock(varAccess);

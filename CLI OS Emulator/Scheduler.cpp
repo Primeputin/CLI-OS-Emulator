@@ -89,6 +89,7 @@ void Scheduler::checkProcessesToBeRemovedFromRunning()
 		else if ((*it)->getProcessState() == Process::SHUTDOWNED) {
 			memoryManager->deallocate((*it)->getPID()); // Deallocate memory for the shutdowned process
 			(*it)->clearSymbolTable();
+			ConsoleManager::getInstance()->addToShutdownTable((*it)->getName(), (*it)->getShutdownTime(), (*it)->getShutdownAddress());
 			ConsoleManager::getInstance()->destroyProcess((*it)->getName());
 			// cout << "Process " << (*it)->getName() << " shutdown on core " << (*it)->getCPUCoreID() << " CPU tick:" << totalCycles.load() << endl;
 			shutDownedProcesses.push_back(*it);

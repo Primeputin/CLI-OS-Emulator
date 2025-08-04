@@ -10,10 +10,16 @@
 
 using namespace std;
 
+struct ConsoleInfo {
+	time_t time;
+	string hexAddress;
+};
+
 class ConsoleManager
 {
 	private:
 		unordered_map<string, shared_ptr<Console>> consoleTable;
+		unordered_map<string, ConsoleInfo> shutdownTable;
 		ConsoleManager();
 		~ConsoleManager() = default;
 		ConsoleManager(ConsoleManager const&) {}; // copy constructor is private
@@ -34,6 +40,7 @@ class ConsoleManager
 		void switchToMain();
 		void switchToProcessConsole(string name);
 		void addToConsoleTable(string name, shared_ptr<Console> console);
+		void addToShutdownTable(string name, time_t time, string hexAdd);
 		bool consoleExists(string name) const;
 		void stop();
 

@@ -129,9 +129,7 @@ void ConsoleManager::addToShutdownTable(string name, time_t time, string hexAdd)
 		temp.hexAddress = hexAdd;
 		shutdownTable.insert({ name, temp});
 	}
-	else {
-		cerr << "Shutdowned process with name " << name << " already exists." << endl;
-	}
+	
 }
 
 bool ConsoleManager::consoleExists(string name) const

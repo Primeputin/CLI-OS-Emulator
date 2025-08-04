@@ -91,10 +91,25 @@ void ConsoleManager::switchToProcessConsole(string name)
 		Console::clear();
 		this->currentConsole = this->consoleTable.at(name);
 		this->currentConsole->header();
+
 	}
 	else {
-		cerr << "None found" << endl;
+		if (shutdownTable.contains(name)) {
+			tm local_time = {};
+			// Use thread-safe functions to get local time
+			#if defined(_WIN32)
+			localtime_s(&local_time, &shutdownTable[name].time);  // Windows
+			#else
+			localtime_r(&now, &shutdownTable[name].time);  // POSIX (Linux/macOS)
+			#endif
+		
+			cerr << "Process " << name << " shut down due to memory access violation error that occurred at "<< put_time(&local_time, "%H:%M:%S") << ". "  << shutdownTable[name].hexAddress << " invalid address." << endl;
+		}
+		else {
+			cerr << "Process " << name << " not found" << endl;
+		}
 	}
+
 }
 
 void ConsoleManager::addToConsoleTable(string name, shared_ptr<Console> console)
@@ -105,6 +120,16 @@ void ConsoleManager::addToConsoleTable(string name, shared_ptr<Console> console)
 	else {
 		cerr << "Console with name " << name << " already exists." << endl;
 	}
+}
+
+void ConsoleManager::addToShutdownTable(string name, time_t time, string hexAdd) {
+	if (shutdownTable.find(name) == shutdownTable.end()) {
+		ConsoleInfo temp;
+		temp.time = time;
+		temp.hexAddress = hexAdd;
+		shutdownTable.insert({ name, temp});
+	}
+	
 }
 
 bool ConsoleManager::consoleExists(string name) const

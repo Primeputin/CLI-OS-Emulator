@@ -65,6 +65,11 @@ public:
 	uint32_t getNPages();
 	void setRandomizedMemSize(uint32_t minMemorySize, uint32_t maxMemorySize);
 
+	void setShutdownAddress(string shutdownHexAdd);
+	void setShutdownTime();
+
+	string getShutdownAddress();
+	time_t getShutdownTime();
 
 private:
 	int pid = -1;
@@ -90,4 +95,7 @@ private:
 	uint32_t memoryFrameSize;
 	uint32_t nPages;
 	time_t startOrEndTime;
+
+	string shutdownHexAdd;
+	time_t shutdownTime;
 };

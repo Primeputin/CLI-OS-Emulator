@@ -33,6 +33,8 @@ void WriteCommand::execute() {
 
 			if (addressValue >= process->getMemorySize() || addressValue < 0) {
 				process->setProcessState(Process::SHUTDOWNED);
+				process->setShutdownAddress(hex);
+				process->setShutdownTime();
 				return; // Exit if the address is out of bounds
 			}
 

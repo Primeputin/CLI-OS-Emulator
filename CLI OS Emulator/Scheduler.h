@@ -65,6 +65,7 @@ class Scheduler
 		std::mutex queueMutex;       // Protects readyQueue
 		std::mutex runningMutex;     // Protects runningProcesses
 		std::mutex finishedMutex;    // Protects finishedProcesses
+		std::mutex shutDownedMutex;    // Protects finishedProcesses
 		vector<shared_ptr<binary_semaphore>> startSem; // Semaphores for each core
 		vector<shared_ptr<binary_semaphore>> endSem; // Semaphores for each core
 		vector<unique_ptr<CPUCoreWorker>> cores;
@@ -72,6 +73,7 @@ class Scheduler
 		vector<shared_ptr<Process>> waitingProcesses;
 		vector<shared_ptr<Process>> runningProcesses;
 		vector<shared_ptr<Process>> finishedProcesses;
+		vector<shared_ptr<Process>> shutDownedProcesses;
 		unique_ptr<DemandPagingMemoryManager> memoryManager;
 };
 

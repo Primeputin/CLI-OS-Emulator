@@ -75,6 +75,7 @@ void Scheduler::checkProcessesToBeRemovedFromRunning()
 {
 	std::lock_guard<std::mutex> rLock(runningMutex);
 	std::lock_guard<std::mutex> fLock(finishedMutex);
+	std::lock_guard<std::mutex> sLock(shutDownedMutex);
 
 	for (auto it = runningProcesses.begin(); it != runningProcesses.end(); ) {
 		if ((*it)->getProcessState() == Process::FINISHED) {
@@ -83,6 +84,14 @@ void Scheduler::checkProcessesToBeRemovedFromRunning()
 			ConsoleManager::getInstance()->destroyProcess((*it)->getName());
 			// cout << "Process " << (*it)->getName() << " finished on core " << (*it)->getCPUCoreID() << " CPU tick:" << totalCycles.load() << endl;
 			finishedProcesses.push_back(*it);
+			it = runningProcesses.erase(it);
+		}
+		else if ((*it)->getProcessState() == Process::SHUTDOWNED) {
+			memoryManager->deallocate((*it)->getPID()); // Deallocate memory for the shutdowned process
+			(*it)->clearSymbolTable();
+			ConsoleManager::getInstance()->destroyProcess((*it)->getName());
+			// cout << "Process " << (*it)->getName() << " shutdown on core " << (*it)->getCPUCoreID() << " CPU tick:" << totalCycles.load() << endl;
+			shutDownedProcesses.push_back(*it);
 			it = runningProcesses.erase(it);
 		}
 		else {
@@ -282,15 +291,37 @@ void Scheduler::rr()
 
 void Scheduler::printProcessesStatus(std::ostream& out)
 {
-	
+	std::lock_guard<std::mutex> lock(queueMutex);
 	std::lock_guard<std::mutex> rLock(runningMutex);
 	std::lock_guard<std::mutex> fLock(finishedMutex);
+	std::lock_guard<std::mutex> sLock(shutDownedMutex);
+
 	auto runningCores = runningProcesses.size();
 	out << "CPU Utilization: " << (runningCores * 100) / numberOfCores << "%\n";
 	out << "Cores used: " << runningCores << "\n";
 	out << "Cores available: " << numberOfCores - runningCores << "\n\n";
 	out << "--------------------------\n";
 
+	out << "Ready processes:\n";
+	std::queue<std::shared_ptr<Process>> tempQueue = readyQueue; // copy
+
+	while (!tempQueue.empty()) {
+		auto process = tempQueue.front();
+		tempQueue.pop();
+
+		uint64_t currentInstruction = process->getCurrentLine();
+		uint64_t totalInstructions = process->getTotalLines();
+		std::string processName = process->getName();
+		time_t createdTime = process->getCreatedTime();
+
+		tm now{};
+		localtime_s(&now, &createdTime);
+
+		out << std::left << std::setw(12) << processName
+			<< " (" << std::put_time(&now, "%m/%d/%Y %I:%M:%S%p") << ")    "
+			<< currentInstruction << "/" << totalInstructions << "\n";
+	}
+	out << endl;
 	out << "Running processes:\n";
 	for (const auto& process : runningProcesses) {
 		uint64_t currentInstruction = process->getCurrentLine();
@@ -307,7 +338,7 @@ void Scheduler::printProcessesStatus(std::ostream& out)
 			<< std::setw(6) << "Core:" << std::setw(0) << CPUCoreID << "   "
 			<< currentInstruction << "/" << totalInstructions << "\n";
 	}
-
+	out << endl;
 	out << "\nFinished processes:\n";
 	for (const auto& process : finishedProcesses) {
 		uint64_t currentInstruction = process->getCurrentLine();
@@ -321,6 +352,22 @@ void Scheduler::printProcessesStatus(std::ostream& out)
 		out << std::left << std::setw(12) << processName
 			<< " (" << std::put_time(&now, "%m/%d/%Y %I:%M:%S%p") << ")    "
 			<< std::setw(10) << "Finished"
+			<< currentInstruction << "/" << totalInstructions << "\n";
+	}
+	out << endl;
+	out << "\nShutdowned processes:\n";
+	for (const auto& process : shutDownedProcesses) {
+		uint64_t currentInstruction = process->getCurrentLine();
+		uint64_t totalInstructions = process->getTotalLines();
+		std::string processName = process->getName();
+		time_t createdTime = process->getCreatedTime();
+
+		tm now;
+		localtime_s(&now, &createdTime);
+
+		out << std::left << std::setw(12) << processName
+			<< " (" << std::put_time(&now, "%m/%d/%Y %I:%M:%S%p") << ")    "
+			<< std::setw(15) << "Shut downed"
 			<< currentInstruction << "/" << totalInstructions << "\n";
 	}
 

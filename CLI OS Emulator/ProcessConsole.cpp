@@ -37,6 +37,9 @@ void ProcessConsole::processCommand(std::string command) {
         if (process->isFinished()) {
             std::cout << "\nFinished!" << std::endl;
         }
+		else if (process->isShutdowned()) {
+			std::cout << "\nShutdowned!" << std::endl;
+		}
         else {
             ConsoleManager::getInstance()->printMemoryUsage(process->getPID());
             std::cout << "\nCurrent instruction line: " << process->getCurrentLine() << std::endl;

@@ -30,6 +30,12 @@ void WriteCommand::execute() {
 		{
 			std::string hex = address.substr(2, 4);
 			uint16_t addressValue = std::stoi(hex, nullptr, 16);
+
+			if (addressValue >= process->getMemorySize() || addressValue < 0) {
+				process->setProcessState(Process::SHUTDOWNED);
+				return; // Exit if the address is out of bounds
+			}
+
 			process->writeToMemory(addressValue, actualValue);
 		}
 		else

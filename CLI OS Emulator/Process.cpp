@@ -66,6 +66,11 @@ bool Process::isFinished() const {
 	return this->currentLine >= totalLines;
 }
 
+bool Process::isShutdowned() const
+{
+	return getProcessState() == Process::SHUTDOWNED;
+}
+
 uint64_t Process::getRemainingLines() const {
 	lock_guard<mutex> lock(mtx);
 	return totalLines - currentLine;

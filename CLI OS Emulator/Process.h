@@ -19,7 +19,8 @@ public:
 	{
 		READY,
 		RUNNING,
-		FINISHED
+		FINISHED,
+		SHUTDOWNED,
 	};
 	typedef std::vector<std::shared_ptr<ICommand>> CommandList;
 
@@ -28,6 +29,7 @@ public:
 	
 	int getPID() const;
 	bool isFinished() const;
+	bool isShutdowned() const;
 	uint64_t getRemainingLines() const;
 	ProcessState getProcessState() const;
 	void setProcessState(ProcessState newState);
@@ -45,8 +47,6 @@ public:
 	void readVariable(const std::string varName, string varNameToBeReadFrom) const;
 	void writeToMemory(uint16_t address, uint16_t value) const;
 	void writeToMemory(string varNameToWriteTo, uint16_t value) const;
-
-	void addInstructions(string instructions);
 
 	string getName() const;
 	uint64_t getCurrentLine() const;

@@ -120,7 +120,16 @@ shared_ptr<Console> Scheduler::generateRandomProcess(string name, bool randomize
 	shared_ptr<Process> process;
 	if (randomizedMemorySize)
 	{
-		process = make_shared<Process>(id, name, totalLines, this->memoryPerFrame, this->minMemoryPerProcess, this->maxMemoryPerProcess, this->memoryManager.get());
+		if (commandList.empty())
+		{
+			process = make_shared<Process>(id, name, totalLines, this->memoryPerFrame, this->minMemoryPerProcess, this->maxMemoryPerProcess, this->memoryManager.get());
+		}
+		else
+		{
+			process = make_shared<Process>(id, name, this->memoryPerFrame, this->minMemoryPerProcess, this->maxMemoryPerProcess, commandList, this->memoryManager.get());
+
+		}
+		
 	}
 	else
 	{
@@ -130,7 +139,7 @@ shared_ptr<Console> Scheduler::generateRandomProcess(string name, bool randomize
 		}
 		else
 		{
-			process = make_shared<Process>(id, name, this->memoryPerFrame, this->minMemoryPerProcess, this->maxMemoryPerProcess, commandList, this->memoryManager.get());
+			process = make_shared<Process>(id, name, this->memoryPerFrame, memorySize, memorySize, commandList, this->memoryManager.get());
 
 		}
 		

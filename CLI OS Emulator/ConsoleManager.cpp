@@ -65,7 +65,7 @@ void ConsoleManager::createProcess(string name, uint16_t memorySize)
 
 void ConsoleManager::createConfiguredProcess(string name, uint16_t memorySize, Process::CommandList commandList)
 {
-	shared_ptr<Console> newConsole = this->scheduler->generateRandomProcess(name, false, memorySize, commandList);
+	shared_ptr<Console> newConsole = this->scheduler->generateRandomProcess(name, true, memorySize, commandList);
 
 	if (newConsole)
 	{

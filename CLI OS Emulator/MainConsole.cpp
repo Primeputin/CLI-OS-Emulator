@@ -357,18 +357,10 @@ void MainConsole::processCommand (string command)
 			cout << "You entered: " << command << "\n" << "Command invalid, please initialize the scheduler first." << "\n\n";
         }
     }
-    else if (texts.size() > 4 && texts[0] == "screen" && texts[1] == "-c" && instructions != "")
+    else if (texts.size() > 3 && texts[0] == "screen" && texts[1] == "-c" && instructions != "")
     {
-
-        uint16_t val;
-        if (!parse_uint16_within_range(texts[3], val)) {
-            cout << "A process may contain 2^6 - 2^16 bytes of memory only" << "\n\n";
-        }
-        else
-        {
-            recognizedCommand(command);
-            createConfiguredProcess(texts[2], val, instructions);
-        }
+        recognizedCommand(command);
+        createConfiguredProcess(texts[2], 0, instructions);
     }
     else if (texts.size() == 1)
     {

@@ -7,6 +7,7 @@
 #include <functional>
 #include <vector>
 #include <cmath>
+#include <sstream>
 #include <random>
 #include "PrintCommand.h"
 #include "PrintVariableCommand.h"
@@ -34,6 +35,27 @@ Process::Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrame
 	generateCommands();
 }
 
+Process::Process(int pid, string name, uint32_t memoryFrameSize, uint32_t minMemorySize, uint32_t maxMemorySize, std::vector<std::shared_ptr<ICommand>> CommandList, DemandPagingMemoryManager* memoryManager)
+{
+	this->pid = pid;
+	this->name = name;
+	this->createdTime = time(nullptr);
+	this->memoryManager = memoryManager;
+	setRandomizedMemSize(minMemorySize, maxMemorySize);
+	this->nPages = memorySize / memoryFrameSize;
+	if (this->nPages == 0) {
+		this->nPages = 1; // Ensure at least one page
+	}
+	this->commandList = CommandList;
+	for (const auto& command : commandList) {
+		if (command) {
+			command->setProcess(this);
+		}
+	}
+	this->currentLine = 0;
+	this->totalLines = commandList.size();
+}
+
 int Process::getPID() const
 {
 	return this->pid;
@@ -42,6 +64,11 @@ int Process::getPID() const
 bool Process::isFinished() const {
 	lock_guard<mutex> lock(mtx);
 	return this->currentLine >= totalLines;
+}
+
+bool Process::isShutdowned() const
+{
+	return getProcessState() == Process::SHUTDOWNED;
 }
 
 uint64_t Process::getRemainingLines() const {
@@ -284,7 +311,7 @@ void Process::generateCommands() {
 			}
 			case 4: // Write Command
 			{
-				return make_shared<WriteCommand>(pid, "0x00", 39, this);
+				return make_shared<WriteCommand>(pid, "0x00", "39", this);
 			}
 			case 5: // Read Command
 			{
@@ -311,11 +338,11 @@ void Process::generateCommands() {
 					{
 						int randomizedVariables = rand() % numberOfVariables; // Randomly choose a variable to print
 						string varName = "var_" + to_string(randomizedVariables);
-						return make_shared<PrintVariableCommand>(pid, varName, this);
+						return make_shared<PrintVariableCommand>(pid, "result from " + varName + ": ", varName, this);
 					}
 					else
 					{
-						return make_shared<PrintVariableCommand>(pid, "result_var", this); // Print the result variable
+						return make_shared<PrintVariableCommand>(pid, "result from result_var: ", "result_var", this); // Print the result variable
 					}
 				}
 				else
@@ -327,7 +354,7 @@ void Process::generateCommands() {
 					}
 					else
 					{
-						return make_shared<PrintVariableCommand>(pid, "result_var", this); // Print the result variable
+						return make_shared<PrintVariableCommand>(pid, "result from result_var: ", "result_var", this); // Print the result variable
 					}
 
 				}

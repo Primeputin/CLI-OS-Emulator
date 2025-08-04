@@ -57,6 +57,10 @@ void CPUCoreWorker::run()
 						stop();
 					}
 				}
+				if (this->currentProcess->isShutdowned())
+				{
+					stop();
+				}
 				currentCycle = 0;
 			}
 

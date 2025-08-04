@@ -19,13 +19,17 @@ public:
 	{
 		READY,
 		RUNNING,
-		FINISHED
+		FINISHED,
+		SHUTDOWNED,
 	};
+	typedef std::vector<std::shared_ptr<ICommand>> CommandList;
 
 	Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrameSize, uint32_t minMemorySize, uint32_t maxMemorySize, DemandPagingMemoryManager* memoryManager);
-
+	Process(int pid, string name, uint32_t memoryFrameSize, uint32_t minMemorySize, uint32_t maxMemorySize, std::vector<std::shared_ptr<ICommand>> CommandList, DemandPagingMemoryManager* memoryManager);
+	
 	int getPID() const;
 	bool isFinished() const;
+	bool isShutdowned() const;
 	uint64_t getRemainingLines() const;
 	ProcessState getProcessState() const;
 	void setProcessState(ProcessState newState);
@@ -61,6 +65,7 @@ public:
 	uint32_t getNPages();
 	void setRandomizedMemSize(uint32_t minMemorySize, uint32_t maxMemorySize);
 
+
 private:
 	int pid = -1;
 	string name;
@@ -68,7 +73,6 @@ private:
 	uint64_t totalLines;
 	time_t createdTime;
 	int cpuCoreID = -1; // -1 means not assigned to any CPU core
-	typedef std::vector<std::shared_ptr<ICommand>> CommandList;
 	CommandList commandList; // List of commands to be executed by the process
 	ProcessState processState = READY;
 	
@@ -76,6 +80,7 @@ private:
 	mutable std::mutex mtx; // Mutex for thread safety when accessing process state and commands
 	mutable std::mutex varAccess; // Mutex for symbol table access
 	void generateCommands();
+
 	std::vector<std::string> logs;
 	mutable std::mutex logMutex;
 	uint32_t memorySize;

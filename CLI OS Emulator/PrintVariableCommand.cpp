@@ -5,15 +5,24 @@
 #include <iomanip>
 #include <ctime>
 
-PrintVariableCommand::PrintVariableCommand(int pid, std::string varName, Process* process)
-    : ICommand(pid, ICommand::PRINT), varName(varName) {
+PrintVariableCommand::PrintVariableCommand(int pid, string text, std::string varName, Process* process)
+    : ICommand(pid, ICommand::PRINT), text(text), varName(varName) {
     this->process = process;
 }
 
 void PrintVariableCommand::execute() {
     uint16_t value;
+
     process->getVariableValue(varName, value);
-    std::cout << value << " from: " << varName << std::endl;
+
+    if (text == "") {   
+        cout << value << std::endl;
+    }
+    else {
+		cout << text << value << endl;
+    }
+
+    
 }
 
 void PrintVariableCommand::logExecute(int cpuCoreID, std::string fileName) {
@@ -27,7 +36,7 @@ void PrintVariableCommand::logExecute(int cpuCoreID, std::string fileName) {
     std::ostringstream oss;
     oss << "(" << std::put_time(&localTime, "%m/%d/%Y %I:%M:%S%p") << ")"
         << " Core:" << std::setw(2) << cpuCoreID
-        << "  " << value << " from: " << this->varName;
+        << "  " << text <<  value << endl;
 
     process->addLog(oss.str());
 }

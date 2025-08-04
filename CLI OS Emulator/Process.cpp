@@ -34,8 +34,8 @@ Process::Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrame
 	}	
 
 	this->maxNumOfVars = memoryFrameSize / 2;
-	if (this->maxNumOfVars == 0) {
-		this->maxNumOfVars = 1; // Ensure at least one variable can be declared
+	if (this->maxNumOfVars > 32) {
+		this->maxNumOfVars = 32;
 	}
 
 	generateCommands();
@@ -55,8 +55,8 @@ Process::Process(int pid, string name, uint32_t memoryFrameSize, uint32_t minMem
 
 
 	this->maxNumOfVars = memoryFrameSize / 2;
-	if (this->maxNumOfVars == 0) {
-		this->maxNumOfVars = 1; // Ensure at least one variable can be declared
+	if (this->maxNumOfVars > 32) {
+		this->maxNumOfVars = 32; 
 	}
 
 	this->commandList = CommandList;

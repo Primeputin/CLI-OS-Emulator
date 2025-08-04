@@ -75,7 +75,7 @@ private:
 	int cpuCoreID = -1; // -1 means not assigned to any CPU core
 	CommandList commandList; // List of commands to be executed by the process
 	ProcessState processState = READY;
-	int maxNumOfVars;
+	int maxNumOfVars = 0;
 	
 	DemandPagingMemoryManager* memoryManager = nullptr;
 	mutable std::mutex mtx; // Mutex for thread safety when accessing process state and commands

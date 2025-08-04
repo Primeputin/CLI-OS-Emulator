@@ -17,12 +17,12 @@ bool DemandPagingMemoryManager::allocate(shared_ptr<Process> process)
 {
     
     std::lock_guard<std::mutex> lock(memoryLock);
-	
+    
     for (uint32_t i = 0; i < process->getNPages(); i++)
     {
-		if (i >= maxPhysicalPages) {
+		/*if (i >= maxPhysicalPages) {
 			throw std::runtime_error("Not enough physical pages available for the process");
-		}
+		}*/
 		pageTables[process->getPID()][i] = PageTableEntry{ -1, false }; // Initialize the page table entry for this process
 	    backStoreFrame(process->getPID(), i, Frame(-1, vector<uint8_t>(this->memoryPerFrame, 0))); // Initialize the backing store for this process
     }
@@ -225,11 +225,11 @@ void DemandPagingMemoryManager::writeValueToMemory(int pid, uint32_t memorySize,
 }
 
 
-void DemandPagingMemoryManager::loadVariable(int pid, const std::string& varName, uint16_t value)
+void DemandPagingMemoryManager::loadVariable(int pid, int maxNumOfVars, const std::string& varName, uint16_t value)
 {
 	std::lock_guard<std::mutex> lock(memoryLock);
     
-    if (symbolTables[pid].size() >= 32)
+    if (symbolTables[pid].size() >= maxNumOfVars)
     {
 		return; // Limit to 32 variables per process
     }

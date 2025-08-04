@@ -46,7 +46,7 @@ class DemandPagingMemoryManager : public MemoryManager
 		void writeValueToVariable(int pid, uint32_t memorySize, uint16_t value, string varName);
 		void writeValueToMemory(int pid, uint32_t memorySize, uint16_t value, uint16_t address);
 
-		void loadVariable(int pid, const std::string& varName, uint16_t value);
+		void loadVariable(int pid, int maxNumOfVars, const std::string& varName, uint16_t value);
 		uint16_t accessVariable(int pid, const std::string& varName);
 		void backStoreFrame(int pid, int virtualPage, const Frame& frame);
 		Frame loadFrameFromBackingStore(int pid, int virtualPage);

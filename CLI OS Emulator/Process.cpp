@@ -32,6 +32,12 @@ Process::Process(int pid, string name, uint64_t totalLines, uint32_t memoryFrame
 	if (this->nPages == 0) {
 		this->nPages = 1; // Ensure at least one page
 	}	
+
+	this->maxNumOfVars = memoryFrameSize / 2;
+	if (this->maxNumOfVars == 0) {
+		this->maxNumOfVars = 1; // Ensure at least one variable can be declared
+	}
+
 	generateCommands();
 }
 
@@ -46,6 +52,13 @@ Process::Process(int pid, string name, uint32_t memoryFrameSize, uint32_t minMem
 	if (this->nPages == 0) {
 		this->nPages = 1; // Ensure at least one page
 	}
+
+
+	this->maxNumOfVars = memoryFrameSize / 2;
+	if (this->maxNumOfVars == 0) {
+		this->maxNumOfVars = 1; // Ensure at least one variable can be declared
+	}
+
 	this->commandList = CommandList;
 	for (const auto& command : commandList) {
 		if (command) {
@@ -114,7 +127,7 @@ void Process::setCPUCoreID(int coreID)
 void Process::declareVariable(const std::string& varName, uint16_t value)
 {
 	std::lock_guard<std::mutex> symLock(varAccess);
-	memoryManager->loadVariable(pid, varName, value);
+	memoryManager->loadVariable(pid, maxNumOfVars, varName, value);
 }
 
 bool Process::getVariableValue(const std::string& varName, uint16_t& outValue) const
@@ -144,14 +157,14 @@ void Process::readVariable(const std::string varName, uint16_t address) const
 {
 	std::lock_guard<std::mutex> symLock(varAccess);
 	uint16_t val = memoryManager->getValueFromAddress(this->getPID(), this->memorySize, address); // This will throw an exception if the variable is not found
-	memoryManager->loadVariable(pid, varName, val); // Load the variable into the process's memory
+	memoryManager->loadVariable(pid, maxNumOfVars, varName, val); // Load the variable into the process's memory
 }
 
 void Process::readVariable(const std::string varName, string varNameToBeReadFrom) const
 {
 	std::lock_guard<std::mutex> symLock(varAccess);
 	uint16_t val = memoryManager->getValueFromAddressToVariable(this->getPID(), this->memorySize, varNameToBeReadFrom); // This will throw an exception if the variable is not found
-	memoryManager->loadVariable(pid, varName, val); // Load the variable into the process's memory
+	memoryManager->loadVariable(pid, maxNumOfVars, varName, val); // Load the variable into the process's memory
 }
 
 void Process::writeToMemory(uint16_t address, uint16_t value) const

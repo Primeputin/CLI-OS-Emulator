@@ -49,25 +49,47 @@ void Scheduler::removeProcessFromRunningQueue(shared_ptr<class Process> process)
 void Scheduler::assignProcessToCore(int coreID)
 {
 	std::shared_ptr<Process> process;
-
 	// Lock only while accessing the queue
 	{
 		std::lock_guard<std::mutex> qLock(queueMutex);
 		if (readyQueue.empty()) return;
 		process = readyQueue.front();
-		readyQueue.pop();
-	}
-	// Lock only while updating running processes
-	{
-		std::lock_guard<std::mutex> rLock(runningMutex);
-		runningProcesses.push_back(process);
-		// cout << "Process " << process->getName() << " assigned to core " << coreID << " CPU tick:" << totalCycles.load() << endl;
+		
 	}
 	if (!memoryManager->isProcessAllocated(process))
 	{
 		memoryManager->allocate(process);
 	}
-	cores[coreID]->doProcess(process);  // Core has its own mutex
+
+	if (process->getNPages() > maxOverallMemory / memoryPerFrame)
+	{
+		for (uint32_t i = 0; i < maxOverallMemory / memoryPerFrame; i++)
+		{
+			memoryManager->pageInWithSafety(process->getPID(), i);
+		}
+		{
+			std::lock_guard<std::mutex> qLock(queueMutex);
+			readyQueue.pop();
+
+		}
+		addProcessToReadyQueue(process); // Re-add the process to the ready queue if it cannot be allocated
+	}
+	else
+	{
+		// Lock only while accessing the queue
+		{
+			std::lock_guard<std::mutex> qLock(queueMutex);
+			readyQueue.pop();
+		}
+
+		// Lock only while updating running processes
+		{
+			std::lock_guard<std::mutex> rLock(runningMutex);
+			runningProcesses.push_back(process);
+			// cout << "Process " << process->getName() << " assigned to core " << coreID << " CPU tick:" << totalCycles.load() << endl;
+		}
+		cores[coreID]->doProcess(process);
+	}
 	
 }
 
@@ -190,9 +212,31 @@ void Scheduler::stop()
 	}
 }
 
+void Scheduler::processBatchGenerator(int batchProcessFreq) 
+{
+	int batchCycles = 0;
+	while (true) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+		batchCycles++;
+
+		if (batchCycles >= batchProcessFreq) {
+			if (generate.load()) {
+				std::string name = "process_" + std::to_string(latestProcessID.load());
+				while (ConsoleManager::getInstance()->consoleExists(name)) {
+					latestProcessID++;
+					name = "process_" + std::to_string(latestProcessID.load());
+				}
+				generateRandomProcess(name, true);
+			}
+			batchCycles = 0; // Reset
+		}
+	}
+}
+
 void Scheduler::fcfs()
 {
 	uint32_t batchCycles = 0;
+	std::thread batchThread(&Scheduler::processBatchGenerator, this, batchProcessFreq);
 	while (this->running.load())
 	{
 		checkProcessesToBeRemovedFromRunning(); // Check for finished processes
@@ -210,29 +254,14 @@ void Scheduler::fcfs()
 		for (int i = 0; i < endSem.size(); i++) {
 			endSem[i]->acquire();
 		}*/
-		std::this_thread::sleep_for(std::chrono::milliseconds(475));
-		batchCycles++;
-		if (batchCycles >= batchProcessFreq) // remove the totalProcesses condition if you want to generate more
-		{
-			if (generate.load())
-			{
-				string name = "process_" + to_string(latestProcessID.load());
-				while (ConsoleManager::getInstance()->consoleExists(name)) {
-					latestProcessID++;
-					name = "process_" + to_string(latestProcessID.load());
-				}
-				generateRandomProcess(name, true);
-			}
-			batchCycles = 0; // Reset batch cycles after adding a new process
-		}
-		
+		std::this_thread::sleep_for(std::chrono::milliseconds(475));	
 		totalCycles++;
 	}
 }
 
 void Scheduler::rr()
 {
-	uint32_t batchCycles = 0;
+	std::thread batchThread(&Scheduler::processBatchGenerator, this, batchProcessFreq);
 	auto currentQuantumCycles = this->quantumCycles;
 	while (this->running.load())
 	{
@@ -271,20 +300,6 @@ void Scheduler::rr()
 		}*/
 		std::this_thread::sleep_for(std::chrono::milliseconds(475));
 		currentQuantumCycles--;
-		batchCycles++;
-		if (batchCycles >= batchProcessFreq) // remove the totalProcesses condition if you want to generate more
-		{
-			if (generate.load())
-			{
-				string name = "process_" + to_string(latestProcessID.load());
-				while (ConsoleManager::getInstance()->consoleExists(name)) {
-					latestProcessID++;
-					name = "process_" + to_string(latestProcessID.load());
-				}
-				generateRandomProcess(name, true);
-			}
-			batchCycles = 0; // Reset batch cycles after adding a new process
-		}
 		totalCycles++;
 	}
 }

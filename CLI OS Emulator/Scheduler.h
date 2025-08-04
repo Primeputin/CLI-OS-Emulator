@@ -36,6 +36,7 @@ class Scheduler
 		shared_ptr<Console> generateRandomProcess(string name, bool randomizedMemorySize, uint16_t memorySize = 64, Process::CommandList commandList = {});
 		void run();
 		void stop();
+		void processBatchGenerator(int batchProcessFreq);
 		void fcfs();
 		void rr();
 		void printProcessesStatus(std::ostream& out);

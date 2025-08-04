@@ -50,6 +50,7 @@ class DemandPagingMemoryManager : public MemoryManager
 		uint16_t accessVariable(int pid, const std::string& varName);
 		void backStoreFrame(int pid, int virtualPage, const Frame& frame);
 		Frame loadFrameFromBackingStore(int pid, int virtualPage);
+		void pageInWithSafety(int pid, int16_t virtualPage);
 	private:
 		vector<Frame> memoryMap;
 		uint32_t maxOverAllMemory;
@@ -66,6 +67,7 @@ class DemandPagingMemoryManager : public MemoryManager
 		std::mutex memoryLock;
 
 		uint16_t into2Bytes(uint8_t first, uint8_t second); // little endian
+	
 		void pageIn(int pid, int16_t virtualPage);
 		void pageOut(int16_t physicalPageIndex, int16_t virtualPage);
 		uint32_t findFreeOrLRUPage(int16_t virtualPage);

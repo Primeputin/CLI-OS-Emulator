@@ -17,14 +17,15 @@ bool DemandPagingMemoryManager::allocate(shared_ptr<Process> process)
 {
     
     std::lock_guard<std::mutex> lock(memoryLock);
-    
+
     for (uint32_t i = 0; i < process->getNPages(); i++)
     {
-		/*if (i >= maxPhysicalPages) {
-			throw std::runtime_error("Not enough physical pages available for the process");
-		}*/
 		pageTables[process->getPID()][i] = PageTableEntry{ -1, false }; // Initialize the page table entry for this process
 	    backStoreFrame(process->getPID(), i, Frame(-1, vector<uint8_t>(this->memoryPerFrame, 0))); // Initialize the backing store for this process
+    }
+    if (process->getNPages() > maxPhysicalPages)
+    {
+        return false;
     }
 
     return true;
@@ -130,7 +131,7 @@ uint32_t DemandPagingMemoryManager::memoryUsagePercentage(uint32_t memoryUsage)
 }
 
 void DemandPagingMemoryManager::loadAddress(int pid, uint32_t memorySize, uint16_t address)
-{
+{ 
     if (address >= memorySize || address < 0)
     {
         throw std::runtime_error("Invalid address");
@@ -367,13 +368,21 @@ uint16_t DemandPagingMemoryManager::into2Bytes(uint8_t first, uint8_t second)
     return combined;
 }
 
+void DemandPagingMemoryManager::pageInWithSafety(int pid, int16_t virtualPage)
+{
+	std::lock_guard<std::mutex> lock(memoryLock);
+    pageIn(pid, virtualPage);
+}
+
 void DemandPagingMemoryManager::pageIn(int pid, int16_t virtualPage)
 {
     int physicalPage = findFreeOrLRUPage(virtualPage);
     memoryMap[physicalPage] = loadFrameFromBackingStore(pid, virtualPage);
+	memoryMap[physicalPage].pid = pid; 
     pageTables[pid][virtualPage].physicalPage = physicalPage;
 	pageTables[pid][virtualPage].valid = true;
     numPagedIn++;
+    updateLRU(pid, virtualPage);
 }
 
 void DemandPagingMemoryManager::pageOut(int16_t physicalPageIndex, int16_t virtualPage)

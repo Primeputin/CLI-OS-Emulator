@@ -103,7 +103,7 @@ void ConsoleManager::switchToProcessConsole(string name)
 			localtime_r(&now, &shutdownTable[name].time);  // POSIX (Linux/macOS)
 			#endif
 		
-			cerr << "Process " << name << " shut down due to memory access violation error that occurred at "<< put_time(&local_time, "%H:%M:%S") << ". "  << shutdownTable[name].hexAddress << " invalid address." << endl;
+			cerr << "Process " << name << " shut down due to memory access violation error that occurred at "<< put_time(&local_time, "%H:%M:%S") << ". "  << "0x" << shutdownTable[name].hexAddress << " invalid address." << endl;
 		}
 		else {
 			cerr << "Process " << name << " not found" << endl;

@@ -209,6 +209,7 @@ void Scheduler::stop()
 		cores[i]->stopCoreThread(); // Stop the core worker thread
 	}
 	if (this->schedulerThread.joinable()) {
+		this->batchProcessGeneratorThread.join();
 		this->schedulerThread.join(); // wait for the thread to finish
 	}
 }
@@ -216,7 +217,7 @@ void Scheduler::stop()
 void Scheduler::processBatchGenerator(int batchProcessFreq) 
 {
 	int batchCycles = 0;
-	while (true) {
+	while (running.load()) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(2500));
 		batchCycles++;
 
@@ -237,7 +238,7 @@ void Scheduler::processBatchGenerator(int batchProcessFreq)
 void Scheduler::fcfs()
 {
 	uint32_t batchCycles = 0;
-	std::thread batchThread(&Scheduler::processBatchGenerator, this, batchProcessFreq);
+	batchProcessGeneratorThread = thread(&Scheduler::processBatchGenerator, this, batchProcessFreq);
 	while (this->running.load())
 	{
 		checkProcessesToBeRemovedFromRunning(); // Check for finished processes
@@ -262,7 +263,7 @@ void Scheduler::fcfs()
 
 void Scheduler::rr()
 {
-	std::thread batchThread(&Scheduler::processBatchGenerator, this, batchProcessFreq);
+	batchProcessGeneratorThread = thread(&Scheduler::processBatchGenerator, this, batchProcessFreq);
 	auto currentQuantumCycles = this->quantumCycles;
 	while (this->running.load())
 	{

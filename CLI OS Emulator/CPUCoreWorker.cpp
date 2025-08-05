@@ -48,7 +48,11 @@ void CPUCoreWorker::run()
 			if (running.load())
 			{
 				this->currentProcess->executeCurrentCommand(); // Execute the current command of the process
-				if (!this->currentProcess->isSleeping())
+				if (this->currentProcess->isShutdowned())
+				{
+					stop();
+				}
+				else if (!this->currentProcess->isSleeping())
 				{
 					this->currentProcess->moveToNextLine(); // Move to the next instruction line
 					if (this->currentProcess->isFinished())
@@ -56,10 +60,6 @@ void CPUCoreWorker::run()
 						this->currentProcess->setProcessState(Process::FINISHED); // Set the process state to finished
 						stop();
 					}
-				}
-				if (this->currentProcess->isShutdowned())
-				{
-					stop();
 				}
 				currentCycle = 0;
 			}

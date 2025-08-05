@@ -61,6 +61,7 @@ class Scheduler
 		atomic <uint64_t> totalProcesses = 0; // Total processes created
 		atomic <uint64_t> latestProcessID = 0; // Total processes created
 		thread schedulerThread;
+		thread batchProcessGeneratorThread;
 		atomic<bool> running = false;
 		atomic<bool> generate = false;
 		std::mutex queueMutex;       // Protects readyQueue

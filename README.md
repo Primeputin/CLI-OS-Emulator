@@ -22,6 +22,10 @@ Go to the project directory and the configurations like in the following:
   min-ins 1000
   max-ins 2000
   delay-per-exec 33
+  max-overall-mem 32768
+  mem-per-frame 32
+  min-mem-per-proc 8
+  max-mem-per-proc 8
 ```
 
 ## Configuration Parameters
@@ -35,6 +39,10 @@ Go to the project directory and the configurations like in the following:
 | **min-ins**            | Minimum number of instructions/commands per process. **Range:** [1, 2<sup>32</sup>]                                                                                                                         |
 | **max-ins**            | Maximum number of instructions/commands per process. **Range:** [1, 2<sup>32</sup>]                                                                                                                         |
 | **delays-per-exec**    | Delay before executing next instruction (in CPU cycles). Uses busy-waiting (process remains in CPU during delay). **Range:** [0, 2<sup>32</sup> **Note:** If 0, each instruction executes in one CPU cycle. |
+| **max-overall-mem**    | Maxmimum memory available in bytes.                                                                                                                                                                         |
+| **mem-per-frame**      | The size of memory in bytes per frame. This is also the memory size per page. The total number of frames is equal to max-overall-mem / mem-per-frame.                                                       |
+| **min-mem-per-proc**   | Minimum memory size for a process.                                                                                                                                                                          |
+| **max-mem-per-proc**   | Maximum memory size for a process.                                                                                                                                                                          |
 
 ## Steps to run
 

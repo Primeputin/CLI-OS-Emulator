@@ -61,7 +61,19 @@ void Scheduler::assignProcessToCore(int coreID)
 		memoryManager->allocate(process);
 	}
 
-	if (process->getNPages() > maxOverallMemory / memoryPerFrame)
+	// remove the false if needed non-demand paging for this test-case
+	/* num - cpu 8
+	scheduler "rr"
+	quantum - cycles 1
+	batch - process - freq 1
+	min - ins 1000
+	max - ins 1000
+	delay - per - exec 0
+	max - overall - mem 1024
+	mem - per - frame 256
+	min - mem - per - proc 1024
+	max - mem - per - proc 1024 */
+	if (false && process->getNPages() > maxOverallMemory / memoryPerFrame)
 	{
 		for (uint32_t i = 0; i < maxOverallMemory / memoryPerFrame; i++)
 		{
